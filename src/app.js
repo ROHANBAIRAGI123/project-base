@@ -16,6 +16,12 @@ app.use(cors({
     credentials: true
 }));
 
+import authRoutes from './routers/auth.routes.js';
+import healthRoutes from './routers/healthcheck.routes.js';
+
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/healthcheck', healthRoutes);
+
 app.get('/', (req, res) => {
     res.send('Welcome to the Express.js server!');
 });
