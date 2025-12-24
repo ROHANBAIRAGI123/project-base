@@ -31,7 +31,8 @@
     "mailgen": "^2.0.32",
     "mongoose": "^9.0.2",
     "nodemailer": "^7.0.12",
-    "nodemon": "^3.1.11"
+    "nodemon": "^3.1.11",
+    "zod": "^4.2.1"
   },
   "devDependencies": {
     "prettier": "3.7.4"
