@@ -1,127 +1,114 @@
 import { Router } from "express";
 import { 
-        loginUser,
-        registerUser, 
-        logoutUser,
-        deleteUser,
-        getAllUsers,
-        getCurrentUser,
-        verifyEmailToken,
-        sendVerificationEmail,
-        refreshAccessToken,
-        changePassword,
-        forgotPassword,
-        resetPassword,
-        updateUserProfile
-    } from "../controllers/auth.controllers.js";
+    loginUser,
+    registerUser, 
+    logoutUser,
+    deleteUser,
+    getAllUsers,
+    getCurrentUser,
+    verifyEmailToken,
+    sendVerificationEmail,
+    refreshAccessToken,
+    changePassword,
+    forgotPassword,
+    resetPassword,
+    updateUserProfile
+} from "../controllers/auth.controllers.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { validate, createValidationLayer } from "../middlewares/validation.middleware.js";
 import { sanitizeAndValidateInput } from "../middlewares/sanitization.middleware.js";
 import {
-  userRegisterSchema,
-  userLoginSchema,
-  userChangeCurrentPasswordSchema,
-  userForgotPasswordSchema,
-  userResetForgotPasswordSchema,
-  userEmailVerificationSchema,
-  userProfileUpdateSchema
+    userRegisterSchema,
+    userLoginSchema,
+    userChangeCurrentPasswordSchema,
+    userForgotPasswordSchema,
+    userResetForgotPasswordSchema,
+    userEmailVerificationSchema,
+    userProfileUpdateSchema
 } from "../validators/index.js";
 import {
-  userRegisterResponseSchema,
-  userLoginResponseSchema,
-  successResponseSchema
+    userRegisterResponseSchema,
+    userLoginResponseSchema,
+    successResponseSchema
 } from "../validators/response.schemas.js";
 
 const router = Router();
 
-// Register user route with comprehensive validation
+// Public routes
 router.route("/register").post(
-  // Apply comprehensive sanitization and validation layers
-  ...createValidationLayer({
-    schema: userRegisterSchema,
-    sanitize: true,
-    validateSecurity: true,
-    responseSchema: process.env.NODE_ENV === 'development' ? userRegisterResponseSchema : null
-  }),
-  registerUser
+    ...createValidationLayer({
+        schema: userRegisterSchema,
+        sanitize: true,
+        validateSecurity: true,
+        responseSchema: process.env.NODE_ENV === 'development' ? userRegisterResponseSchema : null
+    }),
+    registerUser
 );
 
-// Login user route with validation
 router.route("/login").post(
-  ...createValidationLayer({
-    schema: userLoginSchema,
-    sanitize: true,
-    validateSecurity: true,
-    responseSchema: process.env.NODE_ENV === 'development' ? userLoginResponseSchema : null
-  }),
-  loginUser
+    ...createValidationLayer({
+        schema: userLoginSchema,
+        sanitize: true,
+        validateSecurity: true,
+        responseSchema: process.env.NODE_ENV === 'development' ? userLoginResponseSchema : null
+    }),
+    loginUser
 );
 
-// Logout route
-router.route("/logout").post(verifyJWT, logoutUser);
-
-// delete user route
-router.route("/delete-user").post(verifyJWT, deleteUser);
-
-// get all users route
-router.route("/get-all-users").get(getAllUsers);
-
-// get current user route
-router.route("/me").get(verifyJWT, getCurrentUser);
-
-// Email verification route
 router.route("/verify-email/:verificationToken").get(
-  validate(userEmailVerificationSchema),
-  verifyEmailToken
+    validate(userEmailVerificationSchema),
+    verifyEmailToken
 );
 
-// Send verification email route
-router.route("/send-verification-email").post(
-  verifyJWT,
-  sendVerificationEmail
-);
-
-// Refresh token route
 router.route("/refresh-access-token").post(refreshAccessToken);
 
-// Change password route with enhanced security validation
-router.route("/change-password").patch(
-  ...sanitizeAndValidateInput({
-    enableXSSProtection: true,
-    enableSQLProtection: true,
-    maxRequestSize: 1024 * 512,
-  }),
-  validate(userChangeCurrentPasswordSchema),verifyJWT,
-  changePassword
-);
-
-// Forgot password route
 router.route("/forgot-password").post(
-  ...createValidationLayer({
-    schema: userForgotPasswordSchema,
-    sanitize: true,
-    validateSecurity: false
-  }),
-  forgotPassword
+    ...createValidationLayer({
+        schema: userForgotPasswordSchema,
+        sanitize: true,
+        validateSecurity: false
+    }),
+    forgotPassword
 );
 
-// Reset password route
 router.route("/reset-password/:resetToken").post(
-  ...createValidationLayer({
-    schema: userResetForgotPasswordSchema,
-    sanitize: true
-  }),
-  resetPassword
+    ...createValidationLayer({
+        schema: userResetForgotPasswordSchema,
+        sanitize: true
+    }),
+    resetPassword
 );
 
-// Update user profile
+router.route("/get-all-users").get(getAllUsers);
+
+// Protected routes (require authentication)
+router.route("/logout").post(verifyJWT, logoutUser);
+
+router.route("/delete-user").post(verifyJWT, deleteUser);
+
+router.route("/me").get(verifyJWT, getCurrentUser);
+
+router.route("/send-verification-email").post(verifyJWT, sendVerificationEmail);
+
+router.route("/change-password").patch(
+    verifyJWT,
+    ...sanitizeAndValidateInput({
+        enableXSSProtection: true,
+        enableSQLProtection: true,
+        maxRequestSize: 1024 * 512,
+    }),
+    validate(userChangeCurrentPasswordSchema),
+    changePassword
+);
+
 router.route("/me").patch(
-  ...createValidationLayer({
-    schema: userProfileUpdateSchema,
-    sanitize: true,
-    validateSecurity: true
-  }),verifyJWT,
-  updateUserProfile
+    verifyJWT,
+    ...createValidationLayer({
+        schema: userProfileUpdateSchema,
+        sanitize: true,
+        validateSecurity: true
+    }),
+    updateUserProfile
 );
 
 export default router;

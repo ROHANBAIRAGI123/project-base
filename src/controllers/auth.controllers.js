@@ -7,22 +7,27 @@ import { options } from "../utils/constants.js";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 
+// Generate access and refresh tokens for a user
 const generateAccessTokenAndRefreshToken = async (userid) => {
     try {
         const user = await User.findById(userid);
         if (!user) {
             throw new ApiError(404, "User not found");
         }
+
         const accessToken = user.generateAccessToken();
         const refreshToken = user.generateRefreshToken();
+
         user.refreshToken = refreshToken;
-        await user.save({ validateBeforeSave: false });  
+        await user.save({ validateBeforeSave: false });
+
         return { accessToken, refreshToken };
     } catch (error) {
         throw new ApiError(500, "Error generating tokens");
     }
 }
 
+// Register a new user
 const registerUser = asyncHandler(async (req, res) => {
     const { username, email, password, fullname } = req.body;
 
@@ -61,8 +66,8 @@ const registerUser = asyncHandler(async (req, res) => {
     res.status(201).json(new ApiResponse(200, {user: createdUser}, "User registered successfully. Please verify your email."));
 })
 
+// Login user and return tokens
 const loginUser = asyncHandler(async (req, res) => {
-    // Implementation for user login
     const {email, password} = req.body;
     
     const user = await User.findOne({email});
@@ -85,6 +90,7 @@ const loginUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {user: userData, accessToken, refreshToken}, "User logged in successfully."));
 });
 
+// Logout user and clear tokens
 const logoutUser = asyncHandler(async (req, res) => {
     const userId = req.user._id;
 
@@ -101,6 +107,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "User logged out successfully."));
 });
 
+// Delete user account (requires password verification)
 const deleteUser = asyncHandler(async (req, res) => {
     const {email, password} = req.body;
 
@@ -122,13 +129,16 @@ const deleteUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "User deleted successfully."));
 });
 
+// Get all users (should be admin protected)
 const getAllUsers = asyncHandler(async (req, res) => {
     const users = await User.find().select("-password -refreshToken -__v -_id -emailVerificationToken -emailVerificationTokenExpiry -createdAt -updatedAt -refreshTokenExpiry -forgotPasswordToken -forgotPasswordTokenExpiry -isEmailVerified -avatar");
     res.status(200).json(new ApiResponse(200, {users}, "Users fetched successfully."));
 });
 
+// Get current authenticated user
 const getCurrentUser = asyncHandler(async (req, res) => {
     const userId = req.user._id;
+    
     const user = await User.findById(userId).select("-password -refreshToken -__v -emailVerificationToken -emailVerificationTokenExpiry -refreshTokenExpiry -forgotPasswordToken -forgotPasswordTokenExpiry");
     if (!user) {
         throw new ApiError(404, "User not found");
@@ -136,6 +146,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, { user }, "User fetched successfully."));
 });
 
+// Verify email using token from email link
 const verifyEmailToken = asyncHandler(async (req, res) => {
     const {verificationToken} = req.params;
 
@@ -143,7 +154,9 @@ const verifyEmailToken = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Verification token is required");
     }
 
+    // Hash token to match stored hash
     const hashedToken = crypto.createHash("sha256").update(verificationToken).digest("hex");
+    
     const user = await User.findOne({
         emailVerificationToken: hashedToken,
         emailVerificationTokenExpiry: { $gt: Date.now() }
@@ -161,6 +174,7 @@ const verifyEmailToken = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, null, "Email verified successfully."));
 }); 
 
+// Resend verification email
 const sendVerificationEmail = asyncHandler(async (req, res) => {
     const userId = req.user._id;
 
@@ -176,7 +190,6 @@ const sendVerificationEmail = asyncHandler(async (req, res) => {
     const temporaryToken = user.generateEmailVerificationToken();
     await user.save({ validateBeforeSave: false });
 
-    // Send verification email
     const verificationLink = `${req.protocol}://${req.get('host')}/api/v1/auth/verify-email/${temporaryToken}`;
     await sendEmail({
         email: user.email,
@@ -187,6 +200,7 @@ const sendVerificationEmail = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, null, "Verification email sent successfully."));
 });
 
+// Refresh access token using refresh token
 const refreshAccessToken = asyncHandler(async (req, res) => {
     const incomingRefreshToken = req.cookies?.refreshToken || req.headers?.authorization?.split(" ")[1];
     if (!incomingRefreshToken) {
@@ -199,11 +213,11 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
 
     const user = await User.findById(decodedToken._id);
-
     if (!user) {    
         throw new ApiError(404, "User not found");
     }
 
+    // Validate token matches stored value
     if ( user.refreshToken !== incomingRefreshToken) {
         throw new ApiError(401, "Refresh token mismatch");
     }
@@ -218,8 +232,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, { accessToken, refreshToken: newRefreshToken }, "Access token refreshed successfully."));
 });
 
+// Change password (requires current password)
 const changePassword = asyncHandler(async (req, res) => {
-    // Implementation for changing password
     const userId = req.user._id;
     const { oldPassword, newPassword } = req.body;
 
@@ -239,8 +253,8 @@ const changePassword = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, null, "Password changed successfully."));
 });
 
+// Send password reset email
 const forgotPassword = asyncHandler(async (req, res) => {
-    // Implementation for forgot password
     const { email } = req.body;
 
     const user = await User.findOne({ email });
@@ -248,12 +262,13 @@ const forgotPassword = asyncHandler(async (req, res) => {
         throw new ApiError(404, "User not found");
      }
 
-     const token = crypto.randomBytes(20).toString("hex");
-     user.forgotPasswordToken = crypto.createHash("sha256").update(token).digest("hex");
-     user.forgotPasswordTokenExpiry = Date.now() + 60 * 20 * 1000; // 20 minutes
-     await user.save({ validateBeforeSave: false });
+    const token = crypto.randomBytes(20).toString("hex");
+    
+    // Store hashed token with 20 min expiry
+    user.forgotPasswordToken = crypto.createHash("sha256").update(token).digest("hex");
+    user.forgotPasswordTokenExpiry = Date.now() + 60 * 20 * 1000;
+    await user.save({ validateBeforeSave: false });
 
-    // Send password reset email
     const resetLink = `${req.protocol}://${req.get('host')}/api/v1/auth/reset-password/${token}`;
 
     await sendEmail({
@@ -265,8 +280,8 @@ const forgotPassword = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, null, "Password reset email sent successfully."));
 });
 
+// Reset password using token from email
 const resetPassword = asyncHandler(async (req, res) => {
-    // Implementation for resetting password
     const { resetToken } = req.params;
     const { newPassword } = req.body;
 
@@ -275,6 +290,7 @@ const resetPassword = asyncHandler(async (req, res) => {
     }
 
     const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+    
     const user = await User.findOne({
         forgotPasswordToken: hashedToken,
         forgotPasswordTokenExpiry: { $gt: Date.now() }
@@ -292,8 +308,8 @@ const resetPassword = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, null, "Password reset successfully."));
 });
 
+// Update user profile (username/fullname)
 const updateUserProfile = asyncHandler(async (req, res) => {
-    // Implementation for updating user profile
     const userId = req.user._id;
     const { username, fullname } = req.body;
 
