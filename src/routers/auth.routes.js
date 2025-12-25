@@ -5,7 +5,10 @@ import {
         logoutUser,
         deleteUser,
         getAllUsers,
-        getUserById 
+        getCurrentUser,
+        verifyEmailToken,
+        sendVerificationEmail,
+        refreshAccessToken
     } from "../controllers/auth.controllers.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { validate, createValidationLayer } from "../middlewares/validation.middleware.js";
@@ -59,8 +62,24 @@ router.route("/delete-user").post(verifyJWT, deleteUser);
 // get all users route
 router.route("/get-all-users").get(getAllUsers);
 
-// get user by id route
-router.route("/get-user/:id").get(getUserById);
+// get current user route
+router.route("/me").get(verifyJWT, getCurrentUser);
+
+// Email verification route
+router.route("/verify-email/:verificationToken").get(
+  validate(userEmailVerificationSchema),
+  verifyEmailToken
+);
+
+// Send verification email route
+router.route("/send-verification-email").post(
+  verifyJWT,
+  sendVerificationEmail
+);
+
+// Refresh token route
+router.route("/refresh-access-token").post(refreshAccessToken);
+
 
 // TODO: Uncomment these routes once controllers are implemented
 
@@ -94,18 +113,6 @@ router.route("/get-user/:id").get(getUserById);
 //   resetPassword
 // );
 
-// // Email verification route
-// router.route("/verify-email/:verificationToken").get(
-//   validate(userEmailVerificationSchema),
-//   verifyEmail
-// );
-
-// // Refresh token route
-// router.route("/refresh-token").post(refreshToken);
-
-
-// // Get current user profile
-// router.route("/me").get(getCurrentUser);
 
 // // Update user profile
 // router.route("/me").patch(

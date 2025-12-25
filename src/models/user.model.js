@@ -34,11 +34,11 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
-    refreshTokens: {
+    refreshToken: {
         type: String,
         default: null,
     },
-    refreshTokensExpiry: {
+    refreshTokenExpiry: {
         type: Date,
         default: null,
     },
