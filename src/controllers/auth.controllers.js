@@ -99,9 +99,47 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "User logged out successfully."));
 });
 
+const deleteUser = asyncHandler(async (req, res) => {
+    const {email, password} = req.body;
+
+    const user = await User.findOne({email});
+    if(!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const isPasswordValid = await user.comparePassword(password);
+    if(!isPasswordValid) {
+        throw new ApiError(401, "Invalid password");
+    }
+
+    await User.findByIdAndDelete(user._id);
+
+    res.status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, null, "User deleted successfully."));
+});
+
+const getAllUsers = asyncHandler(async (req, res) => {
+    const users = await User.find().select("-password -refreshTokens -__v -_id -emailVerificationToken -emailVerificationTokenExpiry -createdAt -updatedAt -refreshTokensExpiry -forgotPasswordToken -forgotPasswordTokenExpiry -isEmailVerified -avatar");
+    res.status(200).json(new ApiResponse(200, {users}, "Users fetched successfully."));
+});
+
+const getUserById = asyncHandler(async (req, res) => {
+    const userId = req.params.id;
+    const user = await User.findById(userId).select("-password -refreshTokens -__v -emailVerificationToken -emailVerificationTokenExpiry -refreshTokensExpiry -forgotPasswordToken -forgotPasswordTokenExpiry");
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+    res.status(200).json(new ApiResponse(200, { user }, "User fetched successfully."));
+});
+
 export {
     generateAccessTokenAndRefreshToken,
     registerUser,
     loginUser,
-    logoutUser
+    logoutUser,
+    deleteUser,
+    getAllUsers,
+    getUserById
 }

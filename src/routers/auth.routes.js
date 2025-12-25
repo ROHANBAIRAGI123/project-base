@@ -1,5 +1,12 @@
 import { Router } from "express";
-import { loginUser, registerUser, logoutUser } from "../controllers/auth.controllers.js";
+import { 
+        loginUser,
+        registerUser, 
+        logoutUser,
+        deleteUser,
+        getAllUsers,
+        getUserById 
+    } from "../controllers/auth.controllers.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { validate, createValidationLayer } from "../middlewares/validation.middleware.js";
 import { sanitizeAndValidateInput } from "../middlewares/sanitization.middleware.js";
@@ -46,6 +53,14 @@ router.route("/login").post(
 // Logout route
 router.route("/logout").post(verifyJWT, logoutUser);
 
+// delete user route
+router.route("/delete-user").post(verifyJWT, deleteUser);
+
+// get all users route
+router.route("/get-all-users").get(getAllUsers);
+
+// get user by id route
+router.route("/get-user/:id").get(getUserById);
 
 // TODO: Uncomment these routes once controllers are implemented
 
