@@ -39,3 +39,8 @@ export const ValidationConstants = {
   PAGINATION_MAX_LIMIT: 100,
   PAGINATION_DEFAULT_LIMIT: 10,
 };
+
+export const options = {
+  httpOnly: true,
+  secure: true,
+};

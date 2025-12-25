@@ -22,23 +22,29 @@ export const validate = (schema) => {
       const validatedData = await schema.parseAsync(dataToValidate);
 
       // Transform and sanitize the validated data back to request object
-      req.body = validatedData.body || req.body;
-      req.query = validatedData.query || req.query;
-      req.params = validatedData.params || req.params;
+      // Note: In Express 5, req.query and req.params are read-only, so we only update req.body
+      if (validatedData.body) {
+        req.body = validatedData.body;
+      }
+      
+      // Store validated query/params in a custom property for access if needed
+      req.validatedData = validatedData;
 
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const formattedErrors = error.errors.map((err) => ({
-          field: err.path.join('.'),
+        const zodErrors = error.errors || error.issues || [];
+        const formattedErrors = zodErrors.map((err) => ({
+          field: err.path?.join('.') || 'unknown',
           message: err.message,
           value: err.input,
         }));
+        console.log(req.body)
 
         throw new ApiError(
           400,
           "Validation failed",
-          formattedErrors
+          formattedErrors.length > 0 ? formattedErrors : [{ message: error.message }]
         );
       }
       
@@ -74,12 +80,12 @@ export const sanitizeInput = asyncHandler(async (req, res, next) => {
   };
 
   // Sanitize request data
+  // Note: In Express 5, req.query is read-only, so we only sanitize req.body
   if (req.body) {
     req.body = sanitizeValue(req.body);
   }
-  if (req.query) {
-    req.query = sanitizeValue(req.query);
-  }
+  // req.query is read-only in Express 5, skip sanitization
+  // Query params should be validated via Zod schemas instead
 
   next();
 });

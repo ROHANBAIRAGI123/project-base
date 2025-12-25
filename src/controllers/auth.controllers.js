@@ -3,6 +3,7 @@ import { asyncHandler } from "../utils/AsyncHandler.js";
 import  User  from "../models/user.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { emailVerificationMailgenContent,sendEmail } from "../utils/mail.js";
+import { options } from "../utils/constants.js";
 
 const generateAccessTokenAndRefreshToken = async (userid) => {
     try {
@@ -58,7 +59,32 @@ const registerUser = asyncHandler(async (req, res) => {
     res.status(201).json(new ApiResponse(200, {user: createdUser}, "User registered successfully. Please verify your email."));
 })
 
+const loginUser = asyncHandler(async (req, res) => {
+    // Implementation for user login
+    const {email, password} = req.body;
+    
+    const user = await User.findOne({email});
+    if(!user) {
+        throw new ApiError(401, "Invalid email");
+    }
+
+    const isPasswordValid = await user.comparePassword(password);
+    if(!isPasswordValid) {
+        throw new ApiError(401, "Invalid password");
+    }
+
+    const {accessToken, refreshToken} = await generateAccessTokenAndRefreshToken(user._id);
+    
+    const userData = await User.findById(user._id).select("-password -refreshToken -emailVerificationToken -emailVerificationTokenExpiry");
+
+    res.status(201)
+    .cookie("accessToken",accessToken,options)
+    .cookie("refreshToken",refreshToken,options)
+    .json(new ApiResponse(200, {user: userData, accessToken, refreshToken}, "User logged in successfully."));
+});
+
 export {
     generateAccessTokenAndRefreshToken,
     registerUser,
+    loginUser,
 }

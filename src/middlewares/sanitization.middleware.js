@@ -297,9 +297,8 @@ export const sanitizeAndValidateInput = (config = {}) => {
       req.body = InputSanitizer.deepSanitize(req.body, customSanitizers);
     }
     
-    if (req.query) {
-      req.query = InputSanitizer.deepSanitize(req.query, customSanitizers);
-    }
+    // Note: req.query is read-only in Express 5, skip direct assignment
+    // Query params should be validated via Zod schemas instead
     
     next();
   }));

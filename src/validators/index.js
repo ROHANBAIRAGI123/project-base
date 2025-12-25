@@ -8,12 +8,12 @@ import {
 
 // Base validation schemas with enhanced security
 const emailSchema = z
-  .email("Invalid email address")
-  .string()
-  .trim()
-  .min(1, "Email is required")
-  .max(ValidationConstants.EMAIL_MAX_LENGTH, `Email cannot exceed ${ValidationConstants.EMAIL_MAX_LENGTH} characters`)
-  .toLowerCase()
+.string()
+.trim()
+.min(1, "Email is required")
+.max(ValidationConstants.EMAIL_MAX_LENGTH, `Email cannot exceed ${ValidationConstants.EMAIL_MAX_LENGTH} characters`)
+.email("Invalid email address")
+.toLowerCase()
   .transform((val) => val.replace(/\s+/g, ""))
   .refine((val) => !val.includes('..'), "Email cannot contain consecutive dots")
   .refine((val) => !/[<>'"&]/.test(val), "Email contains invalid characters");
