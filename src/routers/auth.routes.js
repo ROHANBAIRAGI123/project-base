@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { loginUser, registerUser } from "../controllers/auth.controllers.js";
+import { loginUser, registerUser, logoutUser } from "../controllers/auth.controllers.js";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { validate, createValidationLayer } from "../middlewares/validation.middleware.js";
 import { sanitizeAndValidateInput } from "../middlewares/sanitization.middleware.js";
 import {
@@ -42,6 +43,8 @@ router.route("/login").post(
   loginUser
 );
 
+// Logout route
+router.route("/logout").post(verifyJWT, logoutUser);
 
 
 // TODO: Uncomment these routes once controllers are implemented
@@ -85,8 +88,6 @@ router.route("/login").post(
 // // Refresh token route
 // router.route("/refresh-token").post(refreshToken);
 
-// // Logout route
-// router.route("/logout").post(logout);
 
 // // Get current user profile
 // router.route("/me").get(getCurrentUser);

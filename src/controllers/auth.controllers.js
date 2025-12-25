@@ -1,6 +1,6 @@
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
-import  User  from "../models/user.models.js";
+import  User  from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { emailVerificationMailgenContent,sendEmail } from "../utils/mail.js";
 import { options } from "../utils/constants.js";
@@ -83,8 +83,25 @@ const loginUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {user: userData, accessToken, refreshToken}, "User logged in successfully."));
 });
 
+const logoutUser = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+
+    const user = await User.findByIdAndUpdate(userId, { $unset: { refreshToken: 1 } }, { new: true });
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    await user.save({ validateBeforeSave: false });
+
+    res.status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, null, "User logged out successfully."));
+});
+
 export {
     generateAccessTokenAndRefreshToken,
     registerUser,
     loginUser,
+    logoutUser
 }
