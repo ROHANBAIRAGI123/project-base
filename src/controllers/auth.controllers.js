@@ -2,7 +2,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import  User  from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
-import { emailVerificationMailgenContent,sendEmail } from "../utils/mail.js";
+import { emailVerificationMailgenContent,sendEmail, forgotPasswordMailgenContent } from "../utils/mail.js";
 import { options } from "../utils/constants.js";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
@@ -217,6 +217,101 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     .cookie("refreshToken", newRefreshToken, options)
     .json(new ApiResponse(200, { accessToken, refreshToken: newRefreshToken }, "Access token refreshed successfully."));
 });
+
+const changePassword = asyncHandler(async (req, res) => {
+    // Implementation for changing password
+    const userId = req.user._id;
+    const { oldPassword, newPassword } = req.body;
+
+    const user = await User.findById(userId );
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const isPasswordValid = await user.comparePassword(oldPassword);
+    if(!isPasswordValid) {
+        throw new ApiError(401, "Invalid current password");
+    }
+
+    user.password = newPassword;
+    await user.save({ validateBeforeSave: false });
+    
+    res.status(200).json(new ApiResponse(200, null, "Password changed successfully."));
+});
+
+const forgotPassword = asyncHandler(async (req, res) => {
+    // Implementation for forgot password
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+        throw new ApiError(404, "User not found");
+     }
+
+     const token = crypto.randomBytes(20).toString("hex");
+     user.forgotPasswordToken = crypto.createHash("sha256").update(token).digest("hex");
+     user.forgotPasswordTokenExpiry = Date.now() + 60 * 20 * 1000; // 20 minutes
+     await user.save({ validateBeforeSave: false });
+
+    // Send password reset email
+    const resetLink = `${req.protocol}://${req.get('host')}/api/v1/auth/reset-password/${token}`;
+
+    await sendEmail({
+        email: user.email,
+        subject: "Password Reset",
+        mailgenContent: forgotPasswordMailgenContent(user.username, resetLink)
+    });
+
+    res.status(200).json(new ApiResponse(200, null, "Password reset email sent successfully."));
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+    // Implementation for resetting password
+    const { resetToken } = req.params;
+    const { newPassword } = req.body;
+
+    if(!resetToken) {
+        throw new ApiError(400, "Reset token is required");
+    }
+
+    const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+    const user = await User.findOne({
+        forgotPasswordToken: hashedToken,
+        forgotPasswordTokenExpiry: { $gt: Date.now() }
+    });
+
+    if(!user) {
+        throw new ApiError(400, "Invalid or expired reset token");
+    }
+
+    user.password = newPassword;
+    user.forgotPasswordToken = undefined;
+    user.forgotPasswordTokenExpiry = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    res.status(200).json(new ApiResponse(200, null, "Password reset successfully."));
+});
+
+const updateUserProfile = asyncHandler(async (req, res) => {
+    // Implementation for updating user profile
+    const userId = req.user._id;
+    const { username, fullname } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    if (username) user.username = username;
+    if (fullname) user.fullname = fullname;
+
+    await user.save({ validateBeforeSave: false });
+
+    const updatedUser = await User.findById(userId).select("-password -refreshToken -__v -emailVerificationToken -emailVerificationTokenExpiry -refreshTokenExpiry -forgotPasswordToken -forgotPasswordTokenExpiry");
+
+    res.status(200).json(new ApiResponse(200, { user: updatedUser }, "User profile updated successfully."));
+});
+
 export {
     generateAccessTokenAndRefreshToken,
     registerUser,
@@ -227,5 +322,9 @@ export {
     getCurrentUser,
     verifyEmailToken,
     sendVerificationEmail,
-    refreshAccessToken
+    refreshAccessToken,
+    changePassword,
+    forgotPassword,
+    resetPassword,
+    updateUserProfile
 }

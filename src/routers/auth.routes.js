@@ -8,7 +8,11 @@ import {
         getCurrentUser,
         verifyEmailToken,
         sendVerificationEmail,
-        refreshAccessToken
+        refreshAccessToken,
+        changePassword,
+        forgotPassword,
+        resetPassword,
+        updateUserProfile
     } from "../controllers/auth.controllers.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { validate, createValidationLayer } from "../middlewares/validation.middleware.js";
@@ -80,48 +84,44 @@ router.route("/send-verification-email").post(
 // Refresh token route
 router.route("/refresh-access-token").post(refreshAccessToken);
 
+// Change password route with enhanced security validation
+router.route("/change-password").patch(
+  ...sanitizeAndValidateInput({
+    enableXSSProtection: true,
+    enableSQLProtection: true,
+    maxRequestSize: 1024 * 512,
+  }),
+  validate(userChangeCurrentPasswordSchema),verifyJWT,
+  changePassword
+);
 
-// TODO: Uncomment these routes once controllers are implemented
+// Forgot password route
+router.route("/forgot-password").post(
+  ...createValidationLayer({
+    schema: userForgotPasswordSchema,
+    sanitize: true,
+    validateSecurity: false
+  }),
+  forgotPassword
+);
 
-// // Change password route with enhanced security validation
-// router.route("/change-password").patch(
-//   ...sanitizeAndValidateInput({
-//     enableXSSProtection: true,
-//     enableSQLProtection: true,
-//     maxRequestSize: 1024 * 512,
-//   }),
-//   validate(userChangeCurrentPasswordSchema),
-//   changePassword
-// );
+// Reset password route
+router.route("/reset-password/:resetToken").post(
+  ...createValidationLayer({
+    schema: userResetForgotPasswordSchema,
+    sanitize: true
+  }),
+  resetPassword
+);
 
-// // Forgot password route
-// router.route("/forgot-password").post(
-//   ...createValidationLayer({
-//     schema: userForgotPasswordSchema,
-//     sanitize: true,
-//     validateSecurity: false
-//   }),
-//   forgotPassword
-// );
-
-// // Reset password route
-// router.route("/reset-password/:resetToken").post(
-//   ...createValidationLayer({
-//     schema: userResetForgotPasswordSchema,
-//     sanitize: true
-//   }),
-//   resetPassword
-// );
-
-
-// // Update user profile
-// router.route("/me").patch(
-//   ...createValidationLayer({
-//     schema: userProfileUpdateSchema,
-//     sanitize: true,
-//     validateSecurity: true
-//   }),
-//   updateUserProfile
-// );
+// Update user profile
+router.route("/me").patch(
+  ...createValidationLayer({
+    schema: userProfileUpdateSchema,
+    sanitize: true,
+    validateSecurity: true
+  }),verifyJWT,
+  updateUserProfile
+);
 
 export default router;
