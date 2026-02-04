@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import User from "./user.model";
 
 const projectSchema = new mongoose.Schema({
     name: {
@@ -16,9 +15,13 @@ const projectSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         required: true
+    },
+    task:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Task"
     }
 },{
     timestamps: true
 })
 
-export const project = mongoose.model("Project", projectSchema);
+export const Project = mongoose.model("Project", projectSchema);

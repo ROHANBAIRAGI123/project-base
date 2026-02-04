@@ -8,16 +8,20 @@ const subTaskSchema = new mongoose.Schema({
         trim: true,
         unique: true,
     },
+    project: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Project"
+    },
     task: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Task"
     },
     description: {
         type: String,
-        trim: true,
+        trim: true,  
     },
     createdBy: {
-        type: mongoose.Schema.types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         ref: "User"
     },
     priority:{
@@ -37,4 +41,4 @@ const subTaskSchema = new mongoose.Schema({
     
 },{timestamps: true})
 
-export const subTask = mongoose.model("SubTask", subTaskSchema);
+export const SubTask = mongoose.model("SubTask", subTaskSchema);
