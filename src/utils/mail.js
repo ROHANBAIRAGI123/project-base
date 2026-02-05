@@ -76,8 +76,37 @@ const forgotPasswordMailgenContent = (username, passwordResetLink) => {
     }
 }
 
+const projectInvitationMailgenContent = (username, projectName, inviterName, acceptLink, rejectLink) => {
+    return {
+        body: {
+            name: username,
+            intro: `${inviterName} has invited you to join the project "${projectName}".`,
+            action: [
+                {
+                    instructions: "To accept the invitation and join the project, click the button below:",
+                    button: {
+                        color: "#22BC66",
+                        text: "Accept Invitation",
+                        link: acceptLink,
+                    },
+                },
+                {
+                    instructions: "Or if you want to decline the invitation:",
+                    button: {
+                        color: "#DC4D2F",
+                        text: "Reject Invitation",
+                        link: rejectLink,
+                    },
+                }
+            ],
+            outro: "This invitation will expire in 7 days. If you did not expect this invitation, you can safely ignore this email.",
+        },
+    }
+}
+
 export {
     emailVerificationMailgenContent,
     forgotPasswordMailgenContent,
+    projectInvitationMailgenContent,
     sendEmail,
 }
