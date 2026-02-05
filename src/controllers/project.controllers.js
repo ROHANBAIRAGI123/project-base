@@ -11,7 +11,41 @@ import { SubTask } from "../models/subtask.model.js";
 
 const getProjects = asyncHandler(async (req, res) => {
     //:TODO 
-   
+   const projects = await ProjectMember.aggregate([
+  {
+    $match: {
+      user: new mongoose.Types.ObjectId(req.user._id)
+    }
+  },
+
+  {
+    $lookup: {
+      from: "projects",
+      localField: "project",
+      foreignField: "_id",
+      as: "projectData"
+    }
+  },
+
+  { $unwind: "$projectData" },
+
+  {
+    $project: {
+      _id: 0,
+      projectInfo: {
+        _id: "$projectData._id",
+        name: "$projectData.name",
+        description: "$projectData.description",
+        createdBy: "$projectData.createdBy",
+        createdAt: "$projectData.createdAt",
+        updatedAt: "$projectData.updatedAt",
+        totalMembers: "$projectData.totalMembers"
+      }
+    }
+  }
+]);
+
+    return res.status(200).json(new ApiResponse(200, projects, "Projects fetched successfully!"));
 
 })
 
@@ -31,7 +65,7 @@ const createProject = asyncHandler(async (req, res) => {
         role: UserRolesEnum.ADMIN
     })
 
-    return res.status(201).json( new ApiResponse(200,project,"Project Created Successfully!"))
+    return res.status(201).json( new ApiResponse(201,project,"Project Created Successfully!"))
 })
 
 const getProjectById = asyncHandler(async (req, res) => {
