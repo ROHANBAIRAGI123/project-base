@@ -33,6 +33,7 @@ import healthRoutes from './routers/healthcheck.routes.js';
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/healthcheck', healthRoutes);
+app.use('/api/v1/:projectId', taskRoutes); // Mount task routes with projectId param
 
 app.get('/', (req, res) => {
     res.send('Welcome to the Express.js server!');

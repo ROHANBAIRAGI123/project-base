@@ -26,6 +26,19 @@ router.route("/").post(
     sanitize: true,
     validateSecurity: true
   }),
+
+  // createTask controller
+);
+
+// Create subtask with comprehensive validation
+router.route("/subtask/:taskId/subtask").post(
+  // Multi-layer validation
+  ...createValidationLayer({
+    schema: createTaskSchema,
+    sanitize: true,
+    validateSecurity: true
+  }),
+
   // createTask controller
 );
 
@@ -35,14 +48,34 @@ router.route("/").get(
   // getTasks controller
 );
 
+// Get subtask with advanced filtering and pagination
+router.route("/subtask/:taskId/:subTaskId").get(
+  validate(taskFilterSchema),
+  // getTasks controller
+);
+
 // Get single task
-router.route("/:taskId").get(
+router.route("/task/:taskId").get(
   validate(deleteTaskSchema), // reuse schema for params validation
   // getTask controller
 );
 
 // Update task with comprehensive validation
-router.route("/:taskId").patch(
+router.route("/task/:taskId").patch(
+  ...sanitizeAndValidateInput({
+    enableXSSProtection: true,
+    enableSQLProtection: true,
+    customSanitizers: {
+      title: (value) => value?.trim().replace(/[<>]/g, ''),
+      description: (value) => value?.trim()
+    }
+  }),
+  validate(updateTaskSchema),
+  // updateTask controller
+);
+
+// Update subtask with comprehensive validation
+router.route("/subtask/:taskId/:subTaskId").patch(
   ...sanitizeAndValidateInput({
     enableXSSProtection: true,
     enableSQLProtection: true,
@@ -56,13 +89,19 @@ router.route("/:taskId").patch(
 );
 
 // Delete task
-router.route("/:taskId").delete(
+router.route("/task/:taskId").delete(
   validate(deleteTaskSchema),
   // deleteTask controller
 );
 
+// Delete subtask
+router.route("/subtask/:taskId/:subTaskId").delete(
+  validate(deleteTaskSchema),
+  // delete SubTask controller
+);
+
 // Task file attachments
-router.route("/:taskId/attachments").post(
+router.route("/task/:taskId/attachments").post(
   validateFileUpload({
     allowedTypes: ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'text/plain'],
     maxSize: 10 * 1024 * 1024, // 10MB for task attachments
