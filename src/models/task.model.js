@@ -34,10 +34,6 @@ const taskSchema = new mongoose.Schema({
         type: String,
         enum: AvailableTaskStatuses,
         default: TaskStatusEnum.TODO
-    },
-    isCompleted: {
-        type: Boolean,
-        default: false,
     }
     
 },{timestamps: true})
