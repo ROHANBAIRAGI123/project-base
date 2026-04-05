@@ -271,6 +271,34 @@ const createSubTask = asyncHandler( async (req,res) => {
     res.status(201).json(new ApiResponse(201, subTask, "Subtask created successfully"));
 })
 
+const getSubTasks = asyncHandler( async (req,res) => {
+    const { taskId, projectId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(taskId)) {
+        throw new ApiError(400, "Invalid taskId");
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(projectId)) {
+      throw new ApiError(400, "Invalid projectId");
+    }
+
+    const taskObjectId = new mongoose.Types.ObjectId(taskId);
+
+    const parentTask = await Task.findOne({ _id: taskObjectId, project: projectId }).select("_id");
+    if (!parentTask) {
+      throw new ApiError(404, "Task not found in this project");
+    }
+
+    // Check if user is a member of the project
+    const isMember = await ProjectMember.findOne({project: projectId, user: req.user._id});
+    if (!isMember) {
+        throw new ApiError(403, "You are not a member of this project");
+    }
+
+    const subTasks = await SubTask.find({ task: taskObjectId }).populate('createdBy', 'fullname email');
+    res.status(200).json(new ApiResponse(200, subTasks, "Subtasks fetched successfully"));
+});
+
 // update subtask
 const updateSubtask = asyncHandler( async (req,res) => {
     const { subTaskId, projectId } = req.params;
@@ -342,6 +370,7 @@ export {
     updateTaskById,
     deleteTaskById,
     createSubTask,
+    getSubTasks,
     updateSubtask,
     deleteSubTask,
 }
