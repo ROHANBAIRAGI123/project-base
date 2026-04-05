@@ -15,12 +15,24 @@ import {
   projectListResponseSchema,
   successResponseSchema
 } from "../validators/response.schemas.js";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { getProjects,
+    createProject,
+    getProjectById,
+    updateProject,
+    deleteProject,
+    addMemberToProject,
+    getProjectMembers,
+    updateMemberRole,
+    removeMember} from "../controllers/project.controllers.js";
+import { checkProjectPermission } from "../middlewares/permission.middleware.js";
+import { UserRolesEnum } from "../utils/constants.js";
 
 const router = Router();
 
 // Create project route with full validation layers
 router.route("/").post(
-  // Apply comprehensive sanitization and security validation
+
   ...sanitizeAndValidateInput({
     enableXSSProtection: true,
     enableSQLProtection: true,
@@ -30,44 +42,36 @@ router.route("/").post(
       description: (value) => value?.trim().replace(/[<>]/g, '')
     }
   }),
-  
-  // Apply Zod schema validation
   validate(createProjectSchema),
-  
-  // Apply response validation in development
   process.env.NODE_ENV === 'development' ? validateResponse(successResponseSchema) : (req, res, next) => next(),
-  
-  // Project controller (to be implemented)
-  // createProject
-);
-
-// Get all projects with pagination and filtering
-router.route("/").get(
+  verifyJWT,
+  createProject,
+).get(
   validate(paginationSchema),
   validateResponse(projectListResponseSchema),
-  // getProjects
+  verifyJWT,
+  getProjects
 );
 
 // Get single project
-router.route("/:id").get(
+router.route("/:projectId").get(
   validate(mongoIdParamSchema),
   validateResponse(successResponseSchema),
-  // getProject
-);
-
-// Update project with enhanced validation
-router.route("/:projectId").patch(
+  verifyJWT,
+  getProjectById
+).delete(
+  validate(mongoIdParamSchema),
+  validateResponse(successResponseSchema),
+  verifyJWT,
+  checkProjectPermission([UserRolesEnum.ADMIN]),
+  deleteProject
+).patch(
   ...sanitizeAndValidateInput(),
   validate(updateProjectSchema),
   validateResponse(successResponseSchema),
-  // updateProject
-);
-
-// Delete project
-router.route("/:id").delete(
-  validate(mongoIdParamSchema),
-  validateResponse(successResponseSchema),
-  // deleteProject
+  verifyJWT,
+  checkProjectPermission([UserRolesEnum.ADMIN]),
+  updateProject
 );
 
 // Project member management routes
@@ -77,17 +81,32 @@ router.route("/:projectId/members").post(
     sanitize: true,
     validateSecurity: true
   }),
-  // addMemberToProject
+  validateResponse(successResponseSchema),
+  verifyJWT,
+  checkProjectPermission([UserRolesEnum.ADMIN]),
+  addMemberToProject
+).get(
+  validate(mongoIdParamSchema),
+  validateResponse(successResponseSchema),
+  verifyJWT,
+  getProjectMembers
 );
 
-router.route("/:projectId/members/:memberId").delete(
+router.route("/:projectId/members/:userId").delete(
   validate(removeMemberFromProjectSchema),
-  // removeMemberFromProject
-);
-
-router.route("/:projectId/members/:memberId/role").patch(
-  validate(updateMemberRoleSchema),
-  // updateMemberRole
+  validateResponse(successResponseSchema),
+  verifyJWT,
+  checkProjectPermission([UserRolesEnum.ADMIN]),
+  removeMember
+).patch(
+  ...createValidationLayer({
+    schema: updateMemberRoleSchema,
+    sanitize: true,
+    validateSecurity: true
+  }),
+  validateResponse(successResponseSchema),
+  verifyJWT,
+  updateMemberRole
 );
 
 export default router;

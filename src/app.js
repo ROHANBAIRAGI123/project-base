@@ -30,10 +30,16 @@ app.use(cors({
 import authRoutes from './routers/auth.routes.js';
 import healthRoutes from './routers/healthcheck.routes.js';
 import taskRoutes from "./routers/task.routes.js";
+import projectInviteRoutes from "./routers/projectInvite.routes.js";
+import projectRoutes from "./routers/project.routes.js";
+
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/healthcheck', healthRoutes);
 app.use('/api/v1/:projectId', taskRoutes); // Mount task routes with projectId param
+
+app.use('/api/v1/projects', projectRoutes);
+app.use('/api/v1/projects', projectInviteRoutes); // Mount project invite routes under /projects
 
 app.get('/', (req, res) => {
     res.send('Welcome to the Express.js server!');
