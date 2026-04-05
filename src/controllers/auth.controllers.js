@@ -80,6 +80,10 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new ApiError(401, "Invalid password");
     }
 
+    if (!user.isEmailVerified) {
+        throw new ApiError(403, "Email not verified. Please verify your email before logging in.");
+    }
+
     const {accessToken, refreshToken} = await generateAccessTokenAndRefreshToken(user._id);
     
     const userData = await User.findById(user._id).select("-password -refreshToken -emailVerificationToken -emailVerificationTokenExpiry");
@@ -94,7 +98,7 @@ const loginUser = asyncHandler(async (req, res) => {
 const logoutUser = asyncHandler(async (req, res) => {
     const userId = req.user._id;
 
-    const user = await User.findByIdAndUpdate(userId, { $unset: { refreshToken: 1 } }, { new: true });
+    const user = await User.findByIdAndUpdate(userId, { $unset: { refreshToken: 1, accessToken: 1, refreshTokenExpiry: 1, accessTokenExpiry: 1 } }, { new: true });
     if (!user) {
         throw new ApiError(404, "User not found");
     }
@@ -109,9 +113,10 @@ const logoutUser = asyncHandler(async (req, res) => {
 
 // Delete user account (requires password verification)
 const deleteUser = asyncHandler(async (req, res) => {
-    const {email, password} = req.body;
+    const {password} = req.body;
+    const userId = req.user._id;
 
-    const user = await User.findOne({email});
+    const user = await User.findById(userId);
     if(!user) {
         throw new ApiError(404, "User not found");
     }
@@ -283,7 +288,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
 // Reset password using token from email
 const resetPassword = asyncHandler(async (req, res) => {
     const { resetToken } = req.params;
-    const { newPassword } = req.body;
+    const { newPassword, confirmPassword } = req.body;
 
     if(!resetToken) {
         throw new ApiError(400, "Reset token is required");
@@ -298,6 +303,10 @@ const resetPassword = asyncHandler(async (req, res) => {
 
     if(!user) {
         throw new ApiError(400, "Invalid or expired reset token");
+    }
+
+    if(newPassword !== confirmPassword) {
+        throw new ApiError(400, "New password and confirm password do not match");
     }
 
     user.password = newPassword;

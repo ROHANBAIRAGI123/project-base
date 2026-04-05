@@ -6,7 +6,8 @@ const taskSchema = new mongoose.Schema({
         required: true,
         type: String,
         trim: true,
-        unique: true,
+        lowercase: true,
+        maxlength: 120,
     },
     project: {
         type: mongoose.Schema.Types.ObjectId,
@@ -16,6 +17,7 @@ const taskSchema = new mongoose.Schema({
     description: {
         type: String,
         trim: true,
+        maxlength: 2000,
     },
     assignedTo: {
         type: mongoose.Schema.Types.ObjectId,
@@ -23,7 +25,8 @@ const taskSchema = new mongoose.Schema({
     },
     assignedBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
+        ref: "User",
+        required: true,
     },
     priority:{
         type: String,
@@ -37,5 +40,7 @@ const taskSchema = new mongoose.Schema({
     }
     
 },{timestamps: true})
+
+taskSchema.index({ project: 1, title: 1 }, { unique: true });
 
 export const Task = mongoose.model("Task", taskSchema);

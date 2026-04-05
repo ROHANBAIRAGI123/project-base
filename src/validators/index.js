@@ -123,9 +123,8 @@ export const userEmailVerificationSchema = z.object({
 export const userProfileUpdateSchema = z.object({
   body: z.object({
     fullname: nameSchema.optional(),
-    bio: z.string().trim().max(500, "Bio cannot exceed 500 characters").optional(),
-    location: z.string().trim().max(100, "Location cannot exceed 100 characters").optional(),
-    website: z.string().url("Invalid website URL").optional(),
+    username: usernameSchema.optional(),
+    email: emailSchema.optional(),
   }).refine((data) => Object.keys(data).length > 0, {
     message: "At least one field must be provided for update",
   })

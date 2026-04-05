@@ -81,7 +81,6 @@ const getProjectById = asyncHandler(async (req, res) => {
 })
 
 const updateProject = asyncHandler(async (req, res) => {
-    //:TODO 
     const {name, description} = req.body;
     const {projectId} = req.params;
 
@@ -138,8 +137,6 @@ const deleteProject = asyncHandler(async (req, res) => {
 })
 
 const getProjectMembers = asyncHandler(async (req, res) => {
-    //:TODO 
-
     const {projectId} = req.params;
 
     const projectMembers = await ProjectMember.aggregate([
@@ -177,7 +174,6 @@ const getProjectMembers = asyncHandler(async (req, res) => {
 })
 
 const updateMemberRole = asyncHandler(async (req, res) => {
-    //:TODO 
     const {projectId, userId} = req.params;
 
     const {role} = req.body;

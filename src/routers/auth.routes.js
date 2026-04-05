@@ -79,7 +79,7 @@ router.route("/reset-password/:resetToken").post(
     resetPassword
 );
 
-router.route("/get-all-users").get(getAllUsers);
+router.route("/get-all-users").get(verifyJWT,getAllUsers);
 
 // Protected routes (require authentication)
 router.route("/logout").post(verifyJWT, logoutUser);

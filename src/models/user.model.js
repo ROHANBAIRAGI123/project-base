@@ -89,21 +89,33 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 };
 
 userSchema.methods.generateAccessToken = function () {
-    return jwt.sign(
+    const accessToken = jwt.sign(
         { _id: this._id,
             username: this.username,
             email: this.email },
         process.env.ACCESS_TOKEN_SECRET,
         { expiresIn: process.env.ACCESS_TOKEN_EXPIRY }
     );
+    
+    const decoded = jwt.decode(accessToken);
+    this.accessToken = accessToken;
+    this.accessTokenExpiry = new Date(decoded.exp * 1000);
+
+    return accessToken;
 }
 
 userSchema.methods.generateRefreshToken = function () {
-    return jwt.sign(
+    const refreshToken = jwt.sign(
         { _id: this._id},
         process.env.REFRESH_TOKEN_SECRET,
         { expiresIn: process.env.REFRESH_TOKEN_EXPIRY }
     );
+
+    const decoded = jwt.decode(refreshToken);
+    this.refreshToken = refreshToken;
+    this.refreshTokenExpiry = new Date(decoded.exp * 1000);
+
+    return refreshToken;
 }
 
 userSchema.methods.generateEmailVerificationToken = function () {
