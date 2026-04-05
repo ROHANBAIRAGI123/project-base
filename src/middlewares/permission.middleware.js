@@ -4,7 +4,7 @@ import User from "../models/user.model.js";
 import {ProjectMember} from "../models/projectMember.model.js";
 
 
-const chechProjectPermission = (roles = []) => {
+const checkProjectPermission = (roles = []) => {
   return asyncHandler(async (req, res, next) => {
     const { projectId } = req.params;
     const userId = req.user._id;
@@ -23,4 +23,4 @@ const chechProjectPermission = (roles = []) => {
   });
 };
 
-export { chechProjectPermission };
+export { checkProjectPermission };

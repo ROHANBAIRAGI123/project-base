@@ -17,7 +17,7 @@ import {
 import { AvailableTaskStatuses, AvailableTaskPriorities, UserRolesEnum } from "../utils/constants.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { createSubTask, createTask, getTasks, getSubTasks, getTaskDetails, updateTaskById, deleteTaskById, updateSubtask, deleteSubTask } from "../controllers/task.controllers.js";
-import { chechProjectPermission } from "../middlewares/permissions.middleware.js";
+import { checkProjectPermission } from "../middlewares/permissions.middleware.js";
 
 const router = Router({ mergeParams: true }); // mergeParams to access projectId
 
@@ -29,12 +29,12 @@ router.route("/").post(
     validateSecurity: true
   }),
   verifyJWT, // Ensure user is authenticated
-  checkProjectPermissions(UserRolesEnum.ADMIN,UserRolesEnum.PROJECT_ADMIN), // Custom middleware to check if user has permissions for the project
+  checkProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]), // Custom middleware to check if user has permissions for the project
   createTask,
 ).get( // Get tasks with advanced filtering and pagination
   validate(taskFilterSchema),
   verifyJWT,
-  checkProjectPermissions(UserRolesEnum.ADMIN,UserRolesEnum.PROJECT_ADMIN,UserRolesEnum.MEMBER), // Allow members to view tasks
+  checkProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN, UserRolesEnum.MEMBER]), // Allow members to view tasks
   getTasks,
 );
 
@@ -47,13 +47,13 @@ router.route("/task/:taskId/subtasks").post(
   }),
   validate(deleteTaskSchema), // for taskId validation
   verifyJWT, // Ensure user is authenticated
-  checkProjectPermissions(UserRolesEnum.ADMIN,UserRolesEnum.PROJECT_ADMIN), // Custom middleware to check if user has permissions for the project
+  checkProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]), // Custom middleware to check if user has permissions for the project
   createSubTask,
 ).get( // Get subtasks with advanced filtering and pagination
   validate(taskFilterSchema),
   validate(deleteTaskSchema), // for taskId validation
   verifyJWT,
-  checkProjectPermissions(UserRolesEnum.ADMIN,UserRolesEnum.PROJECT_ADMIN,UserRolesEnum.MEMBER), // Allow members to view tasks
+  checkProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN, UserRolesEnum.MEMBER]), // Allow members to view tasks
   getSubTasks,
 );
 
@@ -61,7 +61,7 @@ router.route("/task/:taskId/subtasks").post(
 router.route("/task/:taskId").get(
   validate(deleteTaskSchema), // reuse schema for params validation
   verifyJWT,
-  checkProjectPermissions(UserRolesEnum.ADMIN,UserRolesEnum.PROJECT_ADMIN,UserRolesEnum.MEMBER), // Allow members to view tasks
+  checkProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN, UserRolesEnum.MEMBER]), // Allow members to view tasks
   getTaskDetails,
 );
 
@@ -77,12 +77,12 @@ router.route("/task/:taskId").patch(
   }),
   validate(updateTaskSchema),
   verifyJWT,
-  checkProjectPermissions(UserRolesEnum.ADMIN,UserRolesEnum.PROJECT_ADMIN), // Only admins and project admins can update tasks
+  checkProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]), // Only admins and project admins can update tasks
   updateTaskById,
 ).delete( // Delete task
   validate(deleteTaskSchema),
   verifyJWT,
-  checkProjectPermissions(UserRolesEnum.ADMIN,UserRolesEnum.PROJECT_ADMIN), // Only admins and project admins can delete tasks
+  checkProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]), // Only admins and project admins can delete tasks
   deleteTaskById,
 );
 
@@ -98,12 +98,12 @@ router.route("/task/:taskId/subtask/:subTaskId").patch(
   }),
   validate(updateTaskSchema),
   verifyJWT,
-  checkProjectPermissions(UserRolesEnum.ADMIN,UserRolesEnum.PROJECT_ADMIN,UserRolesEnum.MEMBER), // Only admins and project admins can update tasks
+  checkProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN, UserRolesEnum.MEMBER]), // Only admins and project admins can update tasks
   updateSubtask,
 ).delete(
   validate(deleteTaskSchema),
   verifyJWT,
-  checkProjectPermissions(UserRolesEnum.ADMIN,UserRolesEnum.PROJECT_ADMIN), // Only admins and project admins can delete tasks
+  checkProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]), // Only admins and project admins can delete tasks
   deleteSubTask,
 );
 
