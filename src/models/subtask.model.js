@@ -6,7 +6,6 @@ const subTaskSchema = new mongoose.Schema({
         required: true,
         type: String,
         trim: true,
-        unique: true,
     },
     project: {
         type: mongoose.Schema.Types.ObjectId,
@@ -37,4 +36,7 @@ const subTaskSchema = new mongoose.Schema({
     
 },{timestamps: true})
 
+
+subTaskSchema.index({ project: 1, task: 1 });
+subTaskSchema.index({ title: 1, task: 1 }, {unique: true});
 export const SubTask = mongoose.model("SubTask", subTaskSchema);

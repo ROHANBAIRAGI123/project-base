@@ -145,8 +145,8 @@ export const createProjectSchema = z.object({
       .trim()
       .max(ValidationConstants.PROJECT_DESCRIPTION_MAX_LENGTH, `Description cannot exceed ${ValidationConstants.PROJECT_DESCRIPTION_MAX_LENGTH} characters`)
       .optional(),
-    isPrivate: z.boolean().default(false),
-    tags: z.array(z.string().trim().min(1).max(20)).max(10, "Maximum 10 tags allowed").optional(),
+    // isPrivate: z.boolean().default(false),
+    // tags: z.array(z.string().trim().min(1).max(20)).max(10, "Maximum 10 tags allowed").optional(),
   })
 });
 
@@ -164,8 +164,8 @@ export const updateProjectSchema = z.object({
       .trim()
       .max(ValidationConstants.PROJECT_DESCRIPTION_MAX_LENGTH, `Description cannot exceed ${ValidationConstants.PROJECT_DESCRIPTION_MAX_LENGTH} characters`)
       .optional(),
-    isPrivate: z.boolean().optional(),
-    tags: z.array(z.string().trim().min(1).max(20)).max(10, "Maximum 10 tags allowed").optional(),
+    // isPrivate: z.boolean().optional(),
+    // tags: z.array(z.string().trim().min(1).max(20)).max(10, "Maximum 10 tags allowed").optional(),
   }).refine((data) => Object.keys(data).length > 0, {
     message: "At least one field must be provided for update",
   }),

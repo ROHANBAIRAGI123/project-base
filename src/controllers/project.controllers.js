@@ -223,29 +223,29 @@ const removeMember = asyncHandler(async (req, res) => {
     return res.status(201).json( new ApiResponse(200,deletedMember,"Member removed successfully from project"));
 })
 
-const addMemberToProject = asyncHandler(async (req, res) => {
-    //:TODO 
-    const {projectId} = req.params;
-    const {userId, role} = req.body;
+// const addMemberToProject = asyncHandler(async (req, res) => {
+//     //:TODO 
+//     const {projectId} = req.params;
+//     const {userId, role} = req.body;
 
-    const newMember = await ProjectMember.create({
-        project: new mongoose.Types.ObjectId(projectId),
-        user: new mongoose.Types.ObjectId(userId),
-        role
-    })
+//     const newMember = await ProjectMember.create({
+//         project: new mongoose.Types.ObjectId(projectId),
+//         user: new mongoose.Types.ObjectId(userId),
+//         role
+//     })
 
-    await Project.findByIdAndUpdate(
-        projectId,
-        {
-            $inc: { totalMembers: 1 }
-        },
-        {
-            new: true,
-        }
-    );
+//     await Project.findByIdAndUpdate(
+//         projectId,
+//         {
+//             $inc: { totalMembers: 1 }
+//         },
+//         {
+//             new: true,
+//         }
+//     );
 
-    return res.status(201).json( new ApiResponse(200,newMember,"Member added successfully to project"));
-})
+//     return res.status(201).json( new ApiResponse(200,newMember,"Member added successfully to project"));
+// })
 
 export {
     getProjects,
@@ -256,5 +256,4 @@ export {
     getProjectMembers,
     updateMemberRole,
     removeMember,
-    addMemberToProject
 }

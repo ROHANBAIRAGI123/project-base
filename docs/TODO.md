@@ -32,34 +32,15 @@ The codebase is approximately 50% complete with significant gaps in RBAC, route 
 
 ## Projects Module
 
-### High Priority (Security/RBAC)
-
-9. Import `verifyJWT` in [project.routes.js](src/routers/project.routes.js) and apply to all routes
-
-10. Import `chechProjectPermission` (fix typo to `checkProjectPermission`) and apply Admin-only middleware to:
-    - `PATCH /:projectId` (update project)
-    - `DELETE /:id` (delete project)
-    - `POST /:projectId/members` (add member)
-    - `DELETE /:projectId/members/:memberId` (remove member)
-    - `PATCH /:projectId/members/:memberId/role` (update role)
-
-11. Apply any-member permission check to:
-    - `GET /` (list projects)
-    - `GET /:id` (get project details)
 
 ### Medium Priority (Core Logic)
 
-12. **CRITICAL:** Uncomment/wire controller imports in [project.routes.js](src/routers/project.routes.js) — all routes have validation but no handlers (lines 36, 43, 49, 56, 62, 70, 75, 80)
-
 13. Add Note deletion to `deleteProject` controller — currently skips notes ([project.controllers.js](src/controllers/project.controllers.js#L118))
 
-14. Fix `isPrivate` and `tags` fields mismatch — validator accepts but model/controller don't handle
 
 ### Low Priority (Consistency)
 
 15. Fix HTTP method mismatch: PRD says `PUT /:projectId`, code uses `PATCH`
-
-16. Standardize param names: some routes use `:id`, others use `:projectId`
 
 17. Fix controllers returning `201` instead of `200` for GET/PATCH/DELETE operations ([project.controllers.js](src/controllers/project.controllers.js))
 
@@ -67,23 +48,17 @@ The codebase is approximately 50% complete with significant gaps in RBAC, route 
 
 ## Tasks Module
 
-### High Priority (Security/RBAC)
 
 ### Medium Priority (Core Logic)
 
 18. Add missing fields to Task model: `dueDate`, `estimatedHours`, `actualHours`, `tags`, `createdBy`, `attachments` ([task.model.js](src/models/task.model.js))
 
-19. Add `assignedTo` field to SubTask model ([subtask.model.js](src/models/subtask.model.js))
 
 20. Install Multer and configure file upload middleware for task attachments — PRD requires it, not installed ([package.json](package.json))
-
-21. Remove global uniqueness on subtask `title` ([subtask.model.js](src/models/subtask.model.js))
 
 22. Add compound indexes on Task model: `(project, status)`, `(project, assignedTo)`
 
 ### Low Priority (Consistency)
-
-23. Align URL structure with PRD: current `/task/:taskId` vs PRD's `/t/:taskId`
 
 24. Fix HTTP method: PRD says `PUT`, code uses `PATCH`
 
@@ -120,8 +95,6 @@ The codebase is approximately 50% complete with significant gaps in RBAC, route 
 ## Project Invitations Module
 
 ### High Priority (Security/RBAC)
-
-30. Mount invitation routes in [app.js](src/app.js) — currently not mounted
 
 31. Import `verifyJWT` in [projectInvite.routes.js](src/routers/projectInvite.routes.js) and apply to protected routes
 
@@ -172,9 +145,5 @@ The codebase is approximately 50% complete with significant gaps in RBAC, route 
 
 ## Decisions
 
-- **URL structure:** Align with PRD (`/t/:taskId` vs `/task/:taskId`) or document deviation
-
 - **HTTP methods:** PRD specifies `PUT` for updates, code uses `PATCH` — choose one and be consistent
-
-- **Global uniqueness:** Remove from task/subtask titles per project scope, or add project-scoped compound unique indexes
 

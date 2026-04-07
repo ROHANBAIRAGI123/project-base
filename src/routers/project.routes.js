@@ -21,7 +21,6 @@ import { getProjects,
     getProjectById,
     updateProject,
     deleteProject,
-    addMemberToProject,
     getProjectMembers,
     updateMemberRole,
     removeMember} from "../controllers/project.controllers.js";
@@ -50,6 +49,7 @@ router.route("/").post(
   validate(paginationSchema),
   validateResponse(projectListResponseSchema),
   verifyJWT,
+  checkProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.MEMBER, UserRolesEnum.PROJECT_ADMIN]),
   getProjects
 );
 
@@ -58,37 +58,29 @@ router.route("/:projectId").get(
   validate(mongoIdParamSchema),
   validateResponse(successResponseSchema),
   verifyJWT,
+  checkProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.MEMBER, UserRolesEnum.PROJECT_ADMIN]),
   getProjectById
 ).delete(
   validate(mongoIdParamSchema),
   validateResponse(successResponseSchema),
   verifyJWT,
-  checkProjectPermission([UserRolesEnum.ADMIN]),
+  checkProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]),
   deleteProject
 ).patch(
   ...sanitizeAndValidateInput(),
   validate(updateProjectSchema),
   validateResponse(successResponseSchema),
   verifyJWT,
-  checkProjectPermission([UserRolesEnum.ADMIN]),
+  checkProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]),
   updateProject
 );
 
 // Project member management routes
-router.route("/:projectId/members").post(
-  ...createValidationLayer({
-    schema: addMemberToProjectSchema,
-    sanitize: true,
-    validateSecurity: true
-  }),
-  validateResponse(successResponseSchema),
-  verifyJWT,
-  checkProjectPermission([UserRolesEnum.ADMIN]),
-  addMemberToProject
-).get(
+router.route("/:projectId/members").get(
   validate(mongoIdParamSchema),
   validateResponse(successResponseSchema),
   verifyJWT,
+  checkProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.MEMBER, UserRolesEnum.PROJECT_ADMIN]),
   getProjectMembers
 );
 
@@ -96,7 +88,7 @@ router.route("/:projectId/members/:userId").delete(
   validate(removeMemberFromProjectSchema),
   validateResponse(successResponseSchema),
   verifyJWT,
-  checkProjectPermission([UserRolesEnum.ADMIN]),
+  checkProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]),
   removeMember
 ).patch(
   ...createValidationLayer({
@@ -106,6 +98,7 @@ router.route("/:projectId/members/:userId").delete(
   }),
   validateResponse(successResponseSchema),
   verifyJWT,
+  checkProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]),
   updateMemberRole
 );
 
