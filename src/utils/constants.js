@@ -44,3 +44,8 @@ export const options = {
   httpOnly: true,
   secure: true,
 };
+
+export const NotesStatusEnum = {
+  PERSONAL: "personal",
+  SHARED: "shared",
+};

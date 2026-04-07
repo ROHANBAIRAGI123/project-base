@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-
+import {NotesStatusEnum} from "../utils/constants.js"
 
 const noteSchema = new mongoose.Schema({
     user:{
@@ -16,11 +16,20 @@ const noteSchema = new mongoose.Schema({
         type: String,
         required: true,
         trim: true,
+        lowercase: true,
+        maxlength: 100,
     },
     content: {
         type: String,
         required: true,
         trim: true,
+        lowercase: true,
+        maxlength: 500,
+    },
+    status: {
+        type: String, 
+        enum: [NotesStatusEnum.PERSONAL, NotesStatusEnum.SHARED],
+        default: NotesStatusEnum.PERSONAL,
     }
 
 },{timestamps: true})
