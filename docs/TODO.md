@@ -90,23 +90,6 @@ The codebase is approximately 50% complete with significant gaps in RBAC, route 
 
 29. The Note model exists ([note.model.js](src/models/note.model.js)) and appears complete — just needs controller/route integration
 
----
-
-## Project Invitations Module
-
-### High Priority (Security/RBAC)
-
-31. Import `verifyJWT` in [projectInvite.routes.js](src/routers/projectInvite.routes.js) and apply to protected routes
-
-32. Apply Admin-only permission to invitation management endpoints
-
-### Medium Priority (Core Logic)
-
-33. Wire controller imports in [projectInvite.routes.js](src/routers/projectInvite.routes.js) — all commented out
-
-34. Fix schema/controller mismatch: `addMemberToProjectSchema` expects `email` in body, but `sendProjectInvitation` controller expects `userId` ([validators/index.js](src/validators/index.js#L131) vs [projectInvite.controllers.js](src/controllers/projectInvite.controllers.js#L7))
-
----
 
 ## Cross-Cutting Concerns
 

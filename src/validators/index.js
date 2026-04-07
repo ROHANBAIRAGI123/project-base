@@ -176,7 +176,7 @@ export const updateProjectSchema = z.object({
 
 export const addMemberToProjectSchema = z.object({
   body: z.object({
-    email: emailSchema,
+    userId: mongoIdSchema,
     role: z.enum(AvailableUserRole, {
       errorMap: () => ({ message: `Role must be one of: ${AvailableUserRole.join(", ")}` })
     }),
