@@ -330,3 +330,38 @@ export const userForgotPasswordValidator = () => userForgotPasswordSchema;
 export const userResetForgotPasswordValidator = () => userResetForgotPasswordSchema;
 export const createProjectValidator = () => createProjectSchema;
 export const addMembertoProjectValidator = () => addMemberToProjectSchema;
+
+/*
+ * ===========================================================================================
+ *                              NOTES — index.js (Validators)
+ * ===========================================================================================
+ *
+ * PURPOSE: Defines all Zod validation schemas for incoming HTTP request payloads (body, query, params).
+ * ROLE IN ARCHITECTURE: Request Validation Layer. Acts as the first line of defense, ensuring that malformed or malicious data never reaches the controllers or database.
+ * 
+ * IMPORTS:
+ * - `z` (Zod): TypeScript-first schema declaration and validation library.
+ * - `constants.js`: Provides enumerations and application limits (like max lengths) to keep validations in sync with business logic.
+ * 
+ * FUNCTION-BY-FUNCTION ANALYSIS:
+ * - Base Schemas (`emailSchema`, `passwordSchema`, `usernameSchema`): Reusable primitives that enforce strict security rules (e.g., blocking dots, spaces, SQL injection characters).
+ * - Auth Schemas (`userRegisterSchema`, `userLoginSchema`): Validate registration/login payloads. Login uses `.refine` to ensure either email or username is provided.
+ * - Project/Task Schemas (`createProjectSchema`, `createTaskSchema`): Validate domain entities, ensuring required fields, valid dates, and preventing extremely long strings.
+ * - Pagination Schemas: Ensure page and limit are positive integers within allowed bounds.
+ * 
+ * HOW THIS FILE CONNECTS TO OTHER FILES:
+ * - Inbound callers: Used by `src/middlewares/validation.middleware.js` or directly in route definitions to validate requests.
+ * - Outbound dependencies: Relies heavily on `constants.js`.
+ * 
+ * DESIGN PATTERNS:
+ * - Schema-Based Validation: Decouples validation logic from business logic (controllers), making both easier to test and maintain.
+ * - Composition: Base schemas (like `mongoIdSchema`) are reused across complex object schemas, reducing duplication.
+ * 
+ * POTENTIAL INTERVIEW QUESTIONS:
+ * 1. Why use Zod over Joi or Yup?
+ *    Answer: Zod is highly integrated with TypeScript (if TS is added later), has a very expressive API, and handles complex validations (like `.refine()`) cleanly.
+ * 2. What is the purpose of `.transform((val) => val.replace(/\s+/g, ""))` on the email schema?
+ *    Answer: It sanitizes the input by removing accidental spaces before the data is processed, preventing failed lookups or validation errors caused by copy-paste errors.
+ * 3. Why validate max lengths when MongoDB has no strict size limit for strings?
+ *    Answer: To prevent DoS attacks where a malicious user sends a multi-megabyte string, exhausting server memory or database storage.
+ */

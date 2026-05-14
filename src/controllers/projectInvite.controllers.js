@@ -327,3 +327,39 @@ export {
     resendProjectInvitation,
     cancelProjectInvitation,
 };
+
+/*
+ * ===========================================================================================
+ *                              NOTES — projectInvite.controllers.js
+ * ===========================================================================================
+ *
+ * PURPOSE: Handles the business logic for the project invitation lifecycle (send, accept, reject, list, resend, cancel).
+ * ROLE IN ARCHITECTURE: Controller layer. Manages the state machine of `ProjectInvitation`.
+ * 
+ * IMPORTS:
+ * - `ProjectInvitation`, `ProjectMember`, `Project`, `User`: Models.
+ * - `crypto`: For token hashing.
+ * - `mail.js`: For sending invitation emails via Nodemailer.
+ * 
+ * FUNCTION-BY-FUNCTION ANALYSIS:
+ * - `sendProjectInvitation`: Validates the user exists, isn't already a member, and doesn't have a pending invite. Creates the invite, generates a token, and sends an email.
+ * - `acceptProjectInvitation`: Receives a raw token. Hashes it to find the pending invite in the DB. Adds the user to `ProjectMember`. Increments the Project's `totalMembers` counter. Marks the invite as "accepted".
+ * - `rejectProjectInvitation`: Finds the invite via hashed token and updates the status to "rejected".
+ * - `getProjectInvitations` / `getUserPendingInvitations`: Uses MongoDB aggregation to join User and Project data to present human-readable invitation lists (who invited whom to what).
+ * 
+ * HOW THIS FILE CONNECTS TO OTHER FILES:
+ * - Inbound callers: `projectInvite.routes.js`.
+ * - Outbound dependencies: `mail.js` for outbound communications.
+ * 
+ * DESIGN PATTERNS:
+ * - Idempotency Checks: `sendProjectInvitation` strictly checks if an invitation or membership already exists before proceeding, preventing duplicate records.
+ * - Token-Based Verification: Relies on cryptographically secure, time-bound tokens rather than requiring users to manually log in and click "accept" in a UI dashboard.
+ * 
+ * POTENTIAL INTERVIEW QUESTIONS:
+ * 1. Why do we manually `$inc: { totalMembers: 1 }` in `acceptProjectInvitation`?
+ *    Answer: MongoDB doesn't automatically maintain count metrics. While we could count `ProjectMember` records dynamically every time, storing `totalMembers` on the Project model is a caching strategy (denormalization) for faster read performance on project lists.
+ * 2. What happens if a user is invited, but an admin manually adds them to the project via the DB before they click accept?
+ *    Answer: The `acceptProjectInvitation` method explicitly checks `ProjectMember` before adding them. If they are already a member, it marks the invite as accepted and stops, preventing duplicate `ProjectMember` records and unique index violations.
+ * 3. Why hash the invitation token in the database?
+ *    Answer: Standard security practice. If the database is compromised, an attacker can't use the pending invitations to join projects as those users. They would need the raw tokens sent in the emails.
+ */

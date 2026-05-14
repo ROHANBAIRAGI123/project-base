@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { validate, createValidationLayer } from "../middlewares/validation.middleware.js";
-import { sanitizeAndValidateInput, validateFileUpload } from "../middlewares/sanitization.middleware.js";
+import { sanitizeAndValidateInput } from "../middlewares/sanitization.middleware.js";
 import {
   createTaskSchema,
   updateTaskSchema,
@@ -17,7 +17,7 @@ import {
 import { AvailableTaskStatuses, AvailableTaskPriorities, UserRolesEnum } from "../utils/constants.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { createSubTask, createTask, getTasks, getSubTasks, getTaskDetails, updateTaskById, deleteTaskById, updateSubtask, deleteSubTask } from "../controllers/task.controllers.js";
-import { checkProjectPermission } from "../middlewares/permissions.middleware.js";
+import { checkProjectPermission } from "../middlewares/permission.middleware.js";
 
 const router = Router({ mergeParams: true }); // mergeParams to access projectId
 
@@ -147,3 +147,38 @@ router.route("/task/:taskId/subtask/:subTaskId").patch(
 // );
 
 export default router;
+
+/*
+ * ===========================================================================================
+ *                              NOTES — task.routes.js
+ * ===========================================================================================
+ *
+ * PURPOSE: Maps task and subtask related requests to controllers, ensuring deep authorization checks.
+ * ROLE IN ARCHITECTURE: Routing layer. Handles traffic entering via `/api/v1/:projectId` (note the dynamic base path).
+ * 
+ * IMPORTS:
+ * - `express.Router({ mergeParams: true })`: Crucial for accessing `projectId` from the parent router mount point.
+ * - Task controllers, validation middlewares, RBAC middlewares.
+ * 
+ * FUNCTION-BY-FUNCTION ANALYSIS:
+ * - Task Routes (`/` under `/:projectId`):
+ *   - Creation/Updating/Deletion restricted to ADMIN and PROJECT_ADMIN.
+ *   - Viewing (`getTasks`) allowed for all project members.
+ * - Subtask Routes (`/task/:taskId/subtasks`):
+ *   - Follows the same RBAC logic. Validates both `projectId` (from mergeParams) and `taskId` to ensure hierarchy consistency.
+ * 
+ * HOW THIS FILE CONNECTS TO OTHER FILES:
+ * - Inbound callers: Mounted in `src/app.js` via `app.use('/api/v1/:projectId', taskRoutes)`.
+ * - Outbound dependencies: Delegates to `task.controllers.js`.
+ * 
+ * DESIGN PATTERNS:
+ * - Nested Routing Pattern: By mounting the router on `/:projectId`, every task route inherently carries the project context, making the URLs deeply RESTful (e.g., `/api/v1/project123/task/task456`).
+ * 
+ * POTENTIAL INTERVIEW QUESTIONS:
+ * 1. What does `Router({ mergeParams: true })` do and why is it necessary here?
+ *    Answer: Because `app.js` mounts this router on `/api/v1/:projectId`, the `:projectId` parameter belongs to the parent router. Setting `mergeParams: true` allows this child router to access `req.params.projectId`, which is required by the `checkProjectPermission` middleware.
+ * 2. Why validate `taskId` using `deleteTaskSchema` on GET routes?
+ *    Answer: It's likely a naming shortcut by the developer. `deleteTaskSchema` probably just contains validation that `params.taskId` is a valid MongoId, making it reusable across GET, PATCH, and DELETE.
+ * 3. If a user is an Admin in Project A but a Member in Project B, how does the router handle a request to delete a task in Project B?
+ *    Answer: The `checkProjectPermission` middleware will look up the user's role specifically for Project B (extracted from the URL), see they are a Member, and throw a 403 Forbidden before the controller executes.
+ */

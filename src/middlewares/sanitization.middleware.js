@@ -305,3 +305,39 @@ export const sanitizeAndValidateInput = (config = {}) => {
 
   return middlewares;
 };
+
+/*
+ * ===========================================================================================
+ *                              NOTES — sanitization.middleware.js
+ * ===========================================================================================
+ *
+ * PURPOSE: Cleanses incoming request data to prevent XSS, SQL Injection, and other payload-based attacks.
+ * ROLE IN ARCHITECTURE: Security middleware layer. Processes incoming data before it reaches validation or business logic.
+ * 
+ * IMPORTS:
+ * - `z` (Zod), `ApiError`, `asyncHandler`: Standard utilities.
+ * 
+ * FUNCTION-BY-FUNCTION ANALYSIS:
+ * - `InputSanitizer` class: Contains static methods (`sanitizeString`, `sanitizeEmail`, `deepSanitize`) that use Regex to strip dangerous characters, normalizes whitespace, and prevents script injection.
+ * - `rateLimitingValidation`: Checks IP formats and suspicious user agents (bot detection).
+ * - `validateContentType`: Ensures clients send data in the expected format (e.g., `application/json`), preventing MIME-type confusion attacks.
+ * - `validateRequestSize`: Prevents buffer overflow/DoS by rejecting overly large payloads based on the `Content-Length` header.
+ * - `xssProtection` / `sqlInjectionProtection`: Scans payloads recursively using Regex to detect and block malicious script/query patterns.
+ * - `sanitizeAndValidateInput(config)`: A factory function that combines the above middlewares based on configuration flags into an array.
+ * 
+ * HOW THIS FILE CONNECTS TO OTHER FILES:
+ * - Inbound callers: Can be mounted globally in `app.js` or used per-route.
+ * - Outbound dependencies: None.
+ * 
+ * DESIGN PATTERNS:
+ * - Strategy Pattern / Configurable Middleware Chain: `sanitizeAndValidateInput` dynamically builds an array of middleware functions based on the provided configuration.
+ * - Recursive Traversal: `deepSanitize` and `checkXSS` recursively traverse deeply nested JSON objects to ensure all data is scanned.
+ * 
+ * POTENTIAL INTERVIEW QUESTIONS:
+ * 1. Why sanitize data before validating it?
+ *    Answer: Sanitization might normalize data (e.g., trimming spaces, removing invisible control characters) making it valid, whereas raw malicious input would fail validation. It also neutralizes payloads before the validation engine processes them.
+ * 2. Why does `rateLimitingValidation` check the User-Agent?
+ *    Answer: It's a primitive form of bot mitigation. Scripts often use default user agents like `curl` or `python-requests`. Blocking these can reduce automated scraping or brute-force attempts.
+ * 3. Isn't SQL injection protection unnecessary in a MongoDB app?
+ *    Answer: While NoSQL injection is different from SQL injection, many generic WAF (Web Application Firewall) patterns scan for SQL keywords as an indicator of malicious intent. It's a defense-in-depth measure.
+ */

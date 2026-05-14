@@ -110,3 +110,44 @@ export {
     projectInvitationMailgenContent,
     sendEmail,
 }
+
+/*
+ * ===========================================================================================
+ *                              NOTES — mail.js
+ * ===========================================================================================
+ *
+ * PURPOSE: Handles email template generation and SMTP delivery for the application.
+ * ROLE IN ARCHITECTURE: Infrastructure/Service layer utility responsible for communicating with external email providers.
+ * 
+ * IMPORTS:
+ * - `Mailgen`: Used to generate responsive HTML email templates programmatically.
+ * - `nodemailer`: Used to establish SMTP connections and send the emails.
+ * 
+ * FUNCTION-BY-FUNCTION ANALYSIS:
+ * - `sendEmail(options)`: Sends an email using Nodemailer and Mailgen.
+ *   - Parameters: `options` object containing `email` (recipient), `subject`, and `mailgenContent` (template config).
+ *   - Returns: Promise (void).
+ *   - Side effects: Makes outbound network call to SMTP server (e.g., Gmail).
+ *   - Edge cases: Throws an error if SMTP authentication fails or network is down.
+ * 
+ * - `emailVerificationMailgenContent`, `forgotPasswordMailgenContent`, `projectInvitationMailgenContent`:
+ *   - What they do: Return configuration objects used by Mailgen to render specific email bodies.
+ *   - Parameters: Dynamic data like `username`, `verificationLink`, `projectName`, etc.
+ *   - Returns: Mailgen configuration object.
+ * 
+ * HOW THIS FILE CONNECTS TO OTHER FILES:
+ * - Inbound callers: Used by `auth.controllers.js` (for verification/reset) and `projectInvite.controllers.js` (for invites).
+ * - Outbound dependencies: Connects to external SMTP servers via Nodemailer.
+ * 
+ * DESIGN PATTERNS:
+ * - Factory Pattern: The content generator functions act as factories creating standardized template configurations.
+ * - Facade Pattern: `sendEmail` hides the complex configuration of Nodemailer transports and Mailgen generation behind a simple function call.
+ * 
+ * POTENTIAL INTERVIEW QUESTIONS:
+ * 1. Why use `Mailgen` instead of writing raw HTML strings?
+ *    Answer: HTML emails are notoriously difficult to style due to varying client support. Mailgen abstracts this by generating universally compatible, responsive tables and inline CSS.
+ * 2. Why is an "App Password" required instead of a regular Gmail password?
+ *    Answer: Modern email providers (like Google) block basic SMTP authentication for security. App Passwords provide scoped access without exposing the main account password or requiring MFA challenges for the script.
+ * 3. What happens if `transporter.sendMail` fails?
+ *    Answer: An error is thrown, which will be caught by the `asyncHandler` in the controller, preventing the success response from being sent and notifying the client of the failure.
+ */

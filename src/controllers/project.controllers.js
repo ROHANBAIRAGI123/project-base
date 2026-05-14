@@ -257,3 +257,40 @@ export {
     updateMemberRole,
     removeMember,
 }
+
+/*
+ * ===========================================================================================
+ *                              NOTES — project.controllers.js
+ * ===========================================================================================
+ *
+ * PURPOSE: Handles business logic for creating, updating, deleting projects, and managing their members.
+ * ROLE IN ARCHITECTURE: Controller layer. Manages the core structural entities of the application.
+ * 
+ * IMPORTS:
+ * - `Project`, `ProjectMember`, `Task`, `SubTask`: Models needed for cascading deletes and complex aggregations.
+ * - `ApiResponse`, `ApiError`, `asyncHandler`.
+ * - `mongoose`: For `$lookup` aggregation pipelines and `ObjectId` casting.
+ * 
+ * FUNCTION-BY-FUNCTION ANALYSIS:
+ * - `getProjects`: Uses an aggregation pipeline on `ProjectMember` to find all projects where the current user is a member, then joins (`$lookup`) the `projects` collection to return detailed project data.
+ * - `createProject`: Creates the Project document, then creates a `ProjectMember` document assigning the creator the role of `ADMIN`.
+ * - `deleteProject`: Implements a cascading delete. It deletes the project, its members, all tasks, and all subtasks. Requires the user to confirm the project name.
+ * - `getProjectMembers`: Uses aggregation on `ProjectMember` to join with the `users` collection, returning a sanitized list of members and their roles.
+ * - `updateMemberRole` / `removeMember`: Modifies the `ProjectMember` collection to update roles or remove access. `removeMember` also decrements the `totalMembers` counter on the Project.
+ * 
+ * HOW THIS FILE CONNECTS TO OTHER FILES:
+ * - Inbound callers: `project.routes.js`.
+ * - Outbound dependencies: Interacts with multiple models simultaneously, especially during deletion.
+ * 
+ * DESIGN PATTERNS:
+ * - Aggregation Pipeline: Uses MongoDB's powerful `$lookup` to perform SQL-like joins across collections efficiently.
+ * - Cascading Deletes: Manually cleans up child records (`ProjectMember`, `Task`, `SubTask`) when a parent (`Project`) is deleted to prevent orphaned documents and database bloat.
+ * 
+ * POTENTIAL INTERVIEW QUESTIONS:
+ * 1. Why use `aggregate` instead of `find().populate()` in `getProjects`?
+ *    Answer: Because we are querying the *pivot* table (`ProjectMember`) to find the user's memberships, and we want to flatten the response so it looks like an array of Projects. Aggregation pipelines allow us to `$unwind` and `$project` the exact shape we want, which is faster and cleaner than doing data mapping in JavaScript memory.
+ * 2. In `deleteProject`, why do we delete Tasks and Subtasks? What would happen if we didn't?
+ *    Answer: Since MongoDB is a NoSQL database, there are no built-in foreign key constraints with `ON DELETE CASCADE`. If we didn't manually delete them, they would become "orphaned" documents taking up space, and could cause bugs if a query ever encountered a Task pointing to a non-existent Project.
+ * 3. Why require the user to send the project `name` in the body during `deleteProject`?
+ *    Answer: It's a UX safety mechanism (common in tools like GitHub). Deleting a project is highly destructive. Requiring the exact name ensures the action is intentional and not an accidental click.
+ */

@@ -112,3 +112,43 @@ router.route("/me").patch(
 );
 
 export default router;
+
+/*
+ * ===========================================================================================
+ *                              NOTES — auth.routes.js
+ * ===========================================================================================
+ *
+ * PURPOSE: Maps authentication and user profile related HTTP requests to their respective controller functions.
+ * ROLE IN ARCHITECTURE: Routing layer. Directs traffic entering via `/api/v1/auth` through appropriate validation and security middlewares before hitting the controller logic.
+ * 
+ * IMPORTS:
+ * - `express.Router`: Used to create modular, mountable route handlers.
+ * - Controller functions (`loginUser`, `registerUser`, etc.): The actual business logic handlers.
+ * - Middlewares (`verifyJWT`, `validate`, `createValidationLayer`, `sanitizeAndValidateInput`): Used to enforce security, authentication, and input schema validation.
+ * - Validation Schemas (`userRegisterSchema`, etc.): Zod definitions defining what data is allowed.
+ * - Response Schemas (`userLoginResponseSchema`, etc.): Zod definitions defining output shape.
+ * 
+ * FUNCTION-BY-FUNCTION ANALYSIS:
+ * - Public Routes (`/register`, `/login`, `/verify-email`, `/forgot-password`, `/reset-password`):
+ *   - Wrapped in heavy validation and sanitization layers (XSS, SQL injection protection).
+ *   - No `verifyJWT` needed as these are for unauthenticated users.
+ * - Protected Routes (`/logout`, `/me`, `/change-password`, `/delete-user`):
+ *   - All require the `verifyJWT` middleware.
+ *   - `req.user` is guaranteed to be populated by the time the controller is reached.
+ * 
+ * HOW THIS FILE CONNECTS TO OTHER FILES:
+ * - Inbound callers: Mounted in `src/app.js` under the prefix `/api/v1/auth`.
+ * - Outbound dependencies: Passes flow control to `auth.controllers.js`.
+ * 
+ * DESIGN PATTERNS:
+ * - Router-Level Middleware Pattern: Validation and security are applied per-route at the router level, keeping controllers strictly focused on business logic rather than request parsing.
+ * - Environmental Toggles: Response validation (`responseSchema`) is only applied in development mode (`process.env.NODE_ENV === 'development'`) to avoid production performance overhead.
+ * 
+ * POTENTIAL INTERVIEW QUESTIONS:
+ * 1. Why is `verifyJWT` required on `/logout`?
+ *    Answer: Because logging out involves invalidating the specific user's refresh token and clearing their cookies. The server needs to know *who* is making the logout request to clear the correct database records.
+ * 2. Why use `patch` instead of `put` for `/change-password`?
+ *    Answer: `PUT` implies replacing the entire resource (the whole user object), whereas `PATCH` implies applying partial modifications (just the password field).
+ * 3. What does `createValidationLayer` do here?
+ *    Answer: It dynamically generates an array of middleware functions (sanitization, schema validation, security header checks) which Express spreads `...` into the route definition, ensuring robust defense-in-depth before the controller runs.
+ */

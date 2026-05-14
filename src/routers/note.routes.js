@@ -68,3 +68,32 @@ router.route("/:projectId/note/:noteId/status").patch(
 );
 
 export default router;
+
+/*
+ * ===========================================================================================
+ *                              NOTES — note.routes.js
+ * ===========================================================================================
+ *
+ * PURPOSE: Scaffolding for project notes routing. Currently commented out pending future implementation.
+ * ROLE IN ARCHITECTURE: Routing layer. Will handle requests to `/api/v1/notes/:projectId`.
+ * 
+ * IMPORTS:
+ * - Validation and RBAC middlewares prepared for integration.
+ * - Note controllers imported but commented out.
+ * 
+ * FUNCTION-BY-FUNCTION ANALYSIS:
+ * - Routes are defined but handlers are commented out, acting as a blueprint for the next development sprint.
+ * 
+ * HOW THIS FILE CONNECTS TO OTHER FILES:
+ * - Inbound callers: Likely to be mounted in `app.js`.
+ * - Outbound dependencies: `note.controllers.js`.
+ * 
+ * DESIGN PATTERNS:
+ * - Skeleton/Stub Pattern: Laying out the RESTful structure before the underlying business logic is fully hooked up.
+ * 
+ * POTENTIAL INTERVIEW QUESTIONS:
+ * 1. What does `mergeParams: true` indicate about how this router will be mounted?
+ *    Answer: It indicates this router will be mounted on a path containing a parameter, likely `app.use('/api/v1/notes/:projectId', noteRoutes)`.
+ * 2. Why are the controllers commented out?
+ *    Answer: This is common in iterative development. The developer defined the API contract (routes) but might be waiting on the validation schemas or controller logic to be finalized before enabling them, preventing runtime errors in the meantime.
+ */

@@ -353,3 +353,43 @@ export {
     resetPassword,
     updateUserProfile
 }
+
+/*
+ * ===========================================================================================
+ *                              NOTES — auth.controllers.js
+ * ===========================================================================================
+ *
+ * PURPOSE: Houses the core business logic for user authentication, registration, and profile management.
+ * ROLE IN ARCHITECTURE: Controller layer. Receives sanitized/validated data from routes, interacts with the User model, and returns formatted API responses.
+ * 
+ * IMPORTS:
+ * - `ApiResponse`, `ApiError`, `asyncHandler`: Standardized response formatting and error handling.
+ * - `User`: The MongoDB model for user data.
+ * - `crypto`, `jwt`: For token generation and verification.
+ * - `mail.js`: Utility for sending transactional emails (verification, reset passwords).
+ * 
+ * FUNCTION-BY-FUNCTION ANALYSIS:
+ * - `generateAccessTokenAndRefreshToken`: Helper function. Fetches the user, calls instance methods to generate JWTs, and saves the new refresh token to the DB.
+ * - `registerUser`: Checks for duplicates. Creates user. Generates email verification token. Sends welcome/verify email. Returns user without sensitive fields.
+ * - `loginUser`: Verifies email and password. Generates tokens. Sets them in HTTP-only cookies and returns them in the payload.
+ * - `logoutUser`: Clears the refresh token from the database and clears the cookies from the client.
+ * - `verifyEmailToken` & `resetPassword`: Receives a raw token from the URL, hashes it via SHA-256, and compares it to the hash stored in the database.
+ * - `refreshAccessToken`: Extracts the refresh token from cookies/headers, verifies its JWT signature, ensures it matches the one stored in the DB, and issues a new token pair.
+ * 
+ * HOW THIS FILE CONNECTS TO OTHER FILES:
+ * - Inbound callers: `auth.routes.js`.
+ * - Outbound dependencies: `user.model.js`, `mail.js`.
+ * 
+ * DESIGN PATTERNS:
+ * - Stateless Authentication: JWTs mean the server doesn't need to keep session memory.
+ * - Token Rotation: `refreshAccessToken` generates a *new* refresh token every time it is called, invalidating the old one to prevent replay attacks.
+ * - Hashed Token Verification: Email tokens are hashed in the DB. If the DB leaks, attackers cannot instantly verify accounts or reset passwords.
+ * 
+ * POTENTIAL INTERVIEW QUESTIONS:
+ * 1. Why do we set `{ validateBeforeSave: false }` when saving tokens to the user model?
+ *    Answer: Because we are doing partial updates (like just saving a refresh token). We don't want Mongoose to run full schema validation (which might require a password field) when we are only updating token fields.
+ * 2. Why send tokens in both cookies and the JSON response during login?
+ *    Answer: For client flexibility. Web browsers will automatically use the `httpOnly` cookies (preventing XSS access to tokens). Mobile apps or CLI tools might prefer to extract the token from the JSON and send it via the `Authorization` header.
+ * 3. In `refreshAccessToken`, why check if the token matches the database? Isn't verifying the JWT signature enough?
+ *    Answer: Verifying the JWT proves the token is valid, but checking the database ensures the token hasn't been explicitly revoked (e.g., if the user logged out, or an admin forced a session reset).
+ */

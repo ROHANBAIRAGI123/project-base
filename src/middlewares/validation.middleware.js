@@ -246,3 +246,38 @@ export const createValidationLayer = (validationConfig = {}) => {
 
   return middlewares;
 };
+
+/*
+ * ===========================================================================================
+ *                              NOTES — validation.middleware.js
+ * ===========================================================================================
+ *
+ * PURPOSE: Executes Zod validation schemas against incoming requests and handles validation errors.
+ * ROLE IN ARCHITECTURE: Controller wrapper. Ensures the controller only ever receives clean, strongly-typed, and guaranteed-valid data.
+ * 
+ * IMPORTS:
+ * - `z` (Zod): For `instanceof` error checking.
+ * - `ApiError`, `asyncHandler`: For standardized error handling.
+ * 
+ * FUNCTION-BY-FUNCTION ANALYSIS:
+ * - `validate(schema)`: Intercepts the request. Parses `req.body`, `req.query`, `req.params` against the provided Zod schema. If it fails, formats the Zod issues into an array and throws a 400 ApiError. If it succeeds, replaces `req.body` with the parsed (and potentially type-casted/transformed) data.
+ * - `sanitizeInput`: Trims and strips control characters from the body.
+ * - `validateResponse(schema)`: Overrides `res.json` to intercept outbound data, validating it against a response schema to prevent accidental sensitive data leakage.
+ * - `validateFileUpload(options)`: Checks `req.files` against allowed MIME types, max sizes, and count limits before allowing the upload to proceed.
+ * - `createValidationLayer(config)`: Combines input sanitization, security header checks, schema validation, and response validation into a single middleware chain.
+ * 
+ * HOW THIS FILE CONNECTS TO OTHER FILES:
+ * - Inbound callers: Heavily used in all route files (`*.routes.js`) to apply the schemas defined in `validators/index.js`.
+ * - Outbound dependencies: Depends on Zod schemas passed as arguments.
+ * 
+ * DESIGN PATTERNS:
+ * - Decorator/Monkey Patching Pattern: `validateResponse` temporarily overrides the native `res.json` function to inject validation logic before calling the original function.
+ * 
+ * POTENTIAL INTERVIEW QUESTIONS:
+ * 1. Why reassign `req.body = validatedData.body` after validation?
+ *    Answer: Zod doesn't just validate; it also transforms data (e.g., casting strings to numbers, trimming strings, applying defaults). Reassigning ensures downstream controllers get the cleaned data, not the raw input.
+ * 2. Why does `validateResponse` only log errors in development but still send the data?
+ *    Answer: Response validation is a safety net. If a developer breaks the contract, we want to know immediately in dev. In production, we'd rather serve a slightly malformed response to the user than crash the request entirely with a 500 error.
+ * 3. How does `validateFileUpload` work if it doesn't parse the files itself?
+ *    Answer: It assumes a multipart parser middleware (like Multer) has already run and populated `req.files`. It simply enforces business rules (size, type) on the already-parsed file metadata.
+ */
