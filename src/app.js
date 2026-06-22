@@ -41,7 +41,7 @@ import healthRoutes from './routers/healthcheck.routes.js';
 import taskRoutes from "./routers/task.routes.js";
 import projectInviteRoutes from "./routers/projectInvite.routes.js";
 import projectRoutes from "./routers/project.routes.js";
-
+import noteRoutes from "./routers/note.routes.js";
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/healthcheck', healthRoutes);
@@ -50,6 +50,7 @@ app.use('/api/v1/projects', projectRoutes);
 app.use('/api/v1/projects', projectInviteRoutes); // Mount project invite routes under /projects
 
 app.use('/api/v1/:projectId', taskRoutes); // Mount task routes with projectId param
+app.use('/api/v1/:projectId', noteRoutes);
 
 //note router will have :projectId
 

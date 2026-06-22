@@ -16,7 +16,6 @@ We compare the current state of Project Camp with market demands, competitors (L
 3. **No Testing Infrastructure:** There are zero unit or integration tests, meaning any code modifications are highly likely to break existing (and undocumented) API contracts.
 
 ### Nice-to-Have Gaps (Future Refinement)
-1. **Unimplemented Notes Module:** Notes routes are commented out, and controllers are empty stubs.
 2. **No Rate Limiter:** The API is vulnerable to brute-force auth requests and resource exhaustion.
 3. **Unimplemented Task File Attachments:** Scaffolding exists, but `multer` is not installed, and uploads are not wired to S3 or cloud storage.
 

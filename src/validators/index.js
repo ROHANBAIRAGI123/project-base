@@ -3,8 +3,11 @@ import {
   AvailableUserRole, 
   AvailableTaskStatuses, 
   AvailableTaskPriorities,
+  NotesStatusEnum,
   ValidationConstants 
 } from "../utils/constants.js";
+
+const AvailableNotesStatuses = Object.values(NotesStatusEnum);
 
 // Base validation schemas with enhanced security
 const emailSchema = z
@@ -321,6 +324,88 @@ export const fileUploadSchema = z.object({
     }, `File size cannot exceed ${ValidationConstants.MAX_FILE_SIZE / (1024 * 1024)}MB`)
   }).optional()
 });
+
+// ─── Note validation schemas ────────────────────────────────────────────────
+
+export const createNoteSchema = z.object({
+  body: z.object({
+    title: z
+      .string()
+      .trim()
+      .min(1, "Note title is required")
+      .max(100, "Note title cannot exceed 100 characters"),
+    content: z
+      .string()
+      .trim()
+      .min(1, "Note content is required")
+      .max(500, "Note content cannot exceed 500 characters"),
+    status: z
+      .enum(AvailableNotesStatuses, {
+        errorMap: () => ({ message: `Status must be one of: ${AvailableNotesStatuses.join(", ")}` })
+      })
+      .optional(),
+  }),
+  params: z.object({
+    projectId: mongoIdSchema,
+  }),
+});
+
+export const updateNoteSchema = z.object({
+  body: z
+    .object({
+      title: z
+        .string()
+        .trim()
+        .min(1, "Note title cannot be empty")
+        .max(100, "Note title cannot exceed 100 characters")
+        .optional(),
+      content: z
+        .string()
+        .trim()
+        .min(1, "Note content cannot be empty")
+        .max(500, "Note content cannot exceed 500 characters")
+        .optional(),
+      status: z
+        .enum(AvailableNotesStatuses, {
+          errorMap: () => ({ message: `Status must be one of: ${AvailableNotesStatuses.join(", ")}` })
+        })
+        .optional(),
+    })
+    .refine((data) => Object.keys(data).length > 0, {
+      message: "At least one field must be provided for update",
+    }),
+  params: z.object({
+    projectId: mongoIdSchema,
+    noteId: mongoIdSchema,
+  }),
+});
+
+export const changeNoteStatusSchema = z.object({
+  body: z.object({
+    status: z.enum(AvailableNotesStatuses, {
+      errorMap: () => ({ message: `Status must be one of: ${AvailableNotesStatuses.join(", ")}` })
+    }),
+  }),
+  params: z.object({
+    projectId: mongoIdSchema,
+    noteId: mongoIdSchema,
+  }),
+});
+
+export const noteParamsSchema = z.object({
+  params: z.object({
+    projectId: mongoIdSchema,
+    noteId: mongoIdSchema,
+  }),
+});
+
+export const projectNoteParamsSchema = z.object({
+  params: z.object({
+    projectId: mongoIdSchema,
+  }),
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export const deleteUserSchema = z.object({
   body: z.object({
