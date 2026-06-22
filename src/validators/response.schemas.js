@@ -13,7 +13,7 @@ const baseResponseSchema = z.object({
 export const userResponseSchema = z.object({
   _id: z.string(),
   username: z.string(),
-  email: z.email(),
+  email: z.string().email(),
   fullname: z.string(),
   isEmailVerified: z.boolean(),
   createdAt: z.string().datetime().optional(),

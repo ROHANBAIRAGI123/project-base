@@ -24,7 +24,9 @@ import {
     userForgotPasswordSchema,
     userResetForgotPasswordSchema,
     userEmailVerificationSchema,
-    userProfileUpdateSchema
+    userProfileUpdateSchema,
+    deleteUserSchema,
+    refreshAccessTokenSchema
 } from "../validators/index.js";
 import {
     userRegisterResponseSchema,
@@ -60,7 +62,10 @@ router.route("/verify-email/:verificationToken").get(
     verifyEmailToken
 );
 
-router.route("/refresh-access-token").post(refreshAccessToken);
+router.route("/refresh-access-token").post(
+    validate(refreshAccessTokenSchema),
+    refreshAccessToken
+);
 
 router.route("/forgot-password").post(
     ...createValidationLayer({
@@ -84,7 +89,11 @@ router.route("/get-all-users").get(verifyJWT,getAllUsers);
 // Protected routes (require authentication)
 router.route("/logout").post(verifyJWT, logoutUser);
 
-router.route("/delete-user").post(verifyJWT, deleteUser);
+router.route("/delete-user").post(
+    verifyJWT,
+    validate(deleteUserSchema),
+    deleteUser
+);
 
 router.route("/me").get(verifyJWT, getCurrentUser);
 

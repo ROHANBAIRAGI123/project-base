@@ -266,6 +266,15 @@ const resendProjectInvitation = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Invitation not found");
     }
 
+    // Verify user is an admin or project admin for this project
+    const userRole = await ProjectMember.findOne({
+        project: invitation.project,
+        user: req.user._id
+    });
+    if (!userRole || ![UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN].includes(userRole.role)) {
+        throw new ApiError(403, "You do not have permission to resend invitations for this project");
+    }
+
     if (invitation.status !== "pending") {
         throw new ApiError(400, "Can only resend pending invitations");
     }
@@ -307,6 +316,15 @@ const cancelProjectInvitation = asyncHandler(async (req, res) => {
     const invitation = await ProjectInvitation.findById(invitationId);
     if (!invitation) {
         throw new ApiError(404, "Invitation not found");
+    }
+
+    // Verify user is an admin or project admin for this project
+    const userRole = await ProjectMember.findOne({
+        project: invitation.project,
+        user: req.user._id
+    });
+    if (!userRole || ![UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN].includes(userRole.role)) {
+        throw new ApiError(403, "You do not have permission to cancel invitations for this project");
     }
 
     if (invitation.status !== "pending") {

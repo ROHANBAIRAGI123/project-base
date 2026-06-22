@@ -322,6 +322,26 @@ export const fileUploadSchema = z.object({
   }).optional()
 });
 
+export const deleteUserSchema = z.object({
+  body: z.object({
+    password: z.string().min(1, "Password is required"),
+  })
+});
+
+export const refreshAccessTokenSchema = z.object({
+  cookies: z.object({
+    refreshToken: z.string().optional(),
+  }).optional(),
+  headers: z.object({
+    authorization: z.string().optional(),
+  }).passthrough()
+}).refine((data) => {
+  return data.cookies?.refreshToken || data.headers?.authorization;
+}, {
+  message: "Refresh token is required in cookies or authorization header",
+  path: ["cookies.refreshToken"]
+});
+
 // Legacy function exports for backward compatibility (to be removed in future versions)
 export const userRegisterValidator = () => userRegisterSchema;
 export const userLoginValidator = () => userLoginSchema;

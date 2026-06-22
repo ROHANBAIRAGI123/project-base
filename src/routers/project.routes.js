@@ -49,7 +49,6 @@ router.route("/").post(
   validate(paginationSchema),
   validateResponse(projectListResponseSchema),
   verifyJWT,
-  checkProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.MEMBER, UserRolesEnum.PROJECT_ADMIN]),
   getProjects
 );
 

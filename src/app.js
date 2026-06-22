@@ -8,15 +8,24 @@ dotenv.config();
 
 const app = express();
 
-app.use(express.json({limit: '16kb'}));
+app.use(express.json({ limit: '16kb' }));
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true, limit: '16kb' }));
 
 // Debug middleware - remove in production
 app.use((req, res, next) => {
-    console.log(`[${req.method}] ${req.path}`);
-    console.log('Content-Type:', req.get('Content-Type'));
-    console.log('Body:', req.body);
+    if (process.env.NODE_ENV === 'development') {
+        console.log(`[${req.method}] ${req.path}`);
+        console.log('Content-Type:', req.get('Content-Type'));
+        if (req.body) {
+            const sanitizedBody = { ...req.body };
+            const sensitiveKeys = ['password', 'token', 'accessToken', 'refreshToken', 'oldPassword', 'newPassword', 'confirmPassword'];
+            sensitiveKeys.forEach(key => {
+                if (key in sanitizedBody) sanitizedBody[key] = '[REDACTED]';
+            });
+            console.log('Body:', sanitizedBody);
+        }
+    }
     next();
 });
 
@@ -41,6 +50,8 @@ app.use('/api/v1/projects', projectRoutes);
 app.use('/api/v1/projects', projectInviteRoutes); // Mount project invite routes under /projects
 
 app.use('/api/v1/:projectId', taskRoutes); // Mount task routes with projectId param
+
+//note router will have :projectId
 
 app.get('/', (req, res) => {
     res.send('Welcome to the Express.js server!');

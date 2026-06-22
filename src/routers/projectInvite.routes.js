@@ -63,7 +63,6 @@ router.route("/user/pending").get(
 router.route("/:invitationId/resend").post(
   validate(mongoIdParamSchema),
   verifyJWT,
-  checkProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]),
   resendProjectInvitation
 );
 
@@ -71,7 +70,6 @@ router.route("/:invitationId/resend").post(
 router.route("/:invitationId/cancel").delete(
   validate(mongoIdParamSchema),
   verifyJWT,
-  checkProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]),
   cancelProjectInvitation
 );
 

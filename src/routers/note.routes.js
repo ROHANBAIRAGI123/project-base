@@ -14,23 +14,23 @@ import { checkProjectPermission } from "../middlewares/permission.middleware.js"
 // } from "../validators/index.js";
 
 import {
-  getNotes,
-  createNote,
-  getNoteById,
-  updateNote,
-  deleteNote,
-  changeNoteStatus
+	getNotes,
+	createNote,
+	getNoteById,
+	updateNote,
+	deleteNote,
+	changeNoteStatus
 } from "../controllers/note.controllers.js";
 
 const router = Router({ mergeParams: true });
 
 // Notes list for a project
-router.route("/:projectId").get(
+router.route("/").get(
 	// getNotes,
 );
 
 // Create a note for a project
-router.route("/:projectId").post(
+router.route("/").post(
 	...createValidationLayer({
 		// schema: createNoteSchema,
 		sanitize: true,
@@ -40,13 +40,13 @@ router.route("/:projectId").post(
 );
 
 // Get one note
-router.route("/:projectId/note/:noteId").get(
+router.route("/note/:noteId").get(
 	// validate(noteParamsSchema),
 	// getNoteById,
 );
 
 // Update one note
-router.route("/:projectId/note/:noteId").put(
+router.route("/note/:noteId").put(
 	...sanitizeAndValidateInput({
 		enableXSSProtection: true,
 		enableSQLProtection: true,
@@ -56,15 +56,15 @@ router.route("/:projectId/note/:noteId").put(
 );
 
 // Delete one note
-router.route("/:projectId/note/:noteId").delete(
+router.route("/note/:noteId").delete(
 
 	// validate(noteParamsSchema),
 	// deleteNote,
 );
 
-router.route("/:projectId/note/:noteId/status").patch(
-    // validate(noteParamsSchema),
-    // changeNoteStatus,
+router.route("/note/:noteId/status").patch(
+	// validate(noteParamsSchema),
+	// changeNoteStatus,
 );
 
 export default router;
