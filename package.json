@@ -18,7 +18,9 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "dev": "nodemon src/index.js",
     "start": "node src/index.js"
   },
@@ -36,7 +38,11 @@
     "zod": "^4.2.1"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.9",
+    "mongodb-memory-server": "^11.2.0",
     "nodemon": "^3.1.11",
-    "prettier": "3.7.4"
+    "prettier": "3.7.4",
+    "supertest": "^7.2.2",
+    "vitest": "^4.1.9"
   }
 }

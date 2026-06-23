@@ -13,21 +13,21 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: true, limit: '16kb' }));
 
 // Debug middleware - remove in production
-app.use((req, res, next) => {
-    if (process.env.NODE_ENV === 'development') {
-        console.log(`[${req.method}] ${req.path}`);
-        console.log('Content-Type:', req.get('Content-Type'));
-        if (req.body) {
-            const sanitizedBody = { ...req.body };
-            const sensitiveKeys = ['password', 'token', 'accessToken', 'refreshToken', 'oldPassword', 'newPassword', 'confirmPassword'];
-            sensitiveKeys.forEach(key => {
-                if (key in sanitizedBody) sanitizedBody[key] = '[REDACTED]';
-            });
-            console.log('Body:', sanitizedBody);
-        }
-    }
-    next();
-});
+// app.use((req, res, next) => {
+//     if (process.env.NODE_ENV === 'development') {
+//         console.log(`[${req.method}] ${req.path}`);
+//         console.log('Content-Type:', req.get('Content-Type'));
+//         if (req.body) {
+//             const sanitizedBody = { ...req.body };
+//             const sensitiveKeys = ['password', 'token', 'accessToken', 'refreshToken', 'oldPassword', 'newPassword', 'confirmPassword'];
+//             sensitiveKeys.forEach(key => {
+//                 if (key in sanitizedBody) sanitizedBody[key] = '[REDACTED]';
+//             });
+//             console.log('Body:', sanitizedBody);
+//         }
+//     }
+//     next();
+// });
 
 app.use(cors({
     origin: process.env.CORS_ORIGIN?.split(',') || '*',

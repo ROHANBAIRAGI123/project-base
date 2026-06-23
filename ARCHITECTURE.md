@@ -62,3 +62,7 @@ The system is "multi-tenant" meaning users interact within the bounded context o
 ### 4. Unified Error Handling
 
 The application eschews `try/catch` boilerplate in favor of the `asyncHandler` Higher-Order Function. All expected errors are thrown as instances of `ApiError`, which are caught and standardized into JSON responses by the global error-handling middleware in `app.js`.
+
+### 5. Testing Strategy
+
+The application asserts system behavior via automated testing driven by **Vitest** paired with **Supertest**. Tests run against an isolated **MongoDB Memory Server** (`mongodb-memory-server`), ensuring state runs reliably and offline for each run.

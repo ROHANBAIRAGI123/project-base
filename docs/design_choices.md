@@ -125,29 +125,54 @@ Organization → Projects → Tasks → Subtasks
 
 ---
 
-### C. TypeScript on the Backend
+### C. TypeScript on the Backend — Migrate After Tests Pass
 
-**Decision:** Add TypeScript to `project-base` before the codebase grows further.
+**Decision:** Migrate `project-base` from JavaScript to TypeScript **after the initial test suite passes, before building the frontend.**
 
-**Why:** The frontend (`project-camp-web`) will be TypeScript by default. Without TypeScript on the backend, sharing types between the two repos requires a manually-maintained `shared-types/` package. Adding TypeScript to the backend now while the schema is small is a one-time cost with permanent payoff.
+**Timing rationale:**
+
+| Timing option | Risk |
+|---|---|
+| Migrate now (before tests) | A TS migration touches every file. Without tests, you have no safety net to catch regressions. |
+| Migrate after tests | Tests act as a regression guard during the rename + type annotation phase. Safe. |
+| Migrate after Notes/MCP/Agents | Each new feature adds more files to migrate. Cost compounds. Don't wait this long. |
+| Never migrate (stay JS) | Shared types with Next.js frontend require a manually-maintained `shared-types/` package — a guaranteed source of drift bugs. |
+
+**The concrete sequence:**
+```
+Write tests (Vitest) → tests pass → npm install typescript → migrate files to .ts → tests still pass → start frontend
+```
+
+**Why this timing is the sweet spot:**
+- The backend has ~15 source files right now. That is a 1–2 day migration.
+- After Notes CRUD, MCP server, and Agent models land, that number triples. Migration becomes a week-long project.
+- From day 1 of frontend development, the backend exports real TypeScript types that Next.js can import directly — no drift, no manual sync.
+
+**What the migration involves:**
+- `npm install -D typescript @types/node @types/express @types/mongoose @types/bcryptjs @types/jsonwebtoken @types/nodemailer @types/cookie-parser`
+- Add `tsconfig.json` (target: ESNext, module: NodeNext, strict: true)
+- Rename `.js` → `.ts`, fix type errors
+- Update `package.json` scripts: `"dev": "tsx watch src/index.ts"`
+- Vitest has native TypeScript support — zero test changes needed
 
 ---
 
 ## 5. Rate Limiting Strategy
 
-### Phase 1 — In-Memory (Now)
+### Phase 1 — In-Memory (Implemented ✅)
 
-**Package:** `express-rate-limit` (not yet installed)  
+**Package:** `express-rate-limit`
 **File:** `src/middlewares/rateLimiter.middleware.js`
+**Algorithm:** Fixed Window Counter
 
 **Two tiers:**
 
 | Tier | Routes | Limit |
 |---|---|---|
-| **Strict** | `/login`, `/register`, `/forgot-password`, `/reset-password` | 10 requests / 15 min / IP |
-| **General** | All `/api/` routes | 100 requests / min / IP |
+| **Strict** (`authRateLimiter`) | `/login`, `/register`, `/forgot-password`, `/reset-password` — applied per-route in `auth.routes.js` | 10 req / 15 min / IP |
+| **General** (`globalRateLimiter`) | All `/api/` routes — mounted in `app.js` before all route handlers | 100 req / min / IP |
 
-**Wiring:** Mount `globalRateLimiter` in `app.js` before all routes. Mount `authRateLimiter` on individual auth routes in `auth.routes.js`.
+**Known limitation of Fixed Window:** A determined client can double-burst at window boundaries (end of window N + start of window N+1). Acceptable at current traffic. Upgrade to Sliding Window via `rate-limiter-flexible` + Redis in Phase 3 if needed.
 
 ### Phase 3 — Redis Store (When BullMQ is introduced)
 
@@ -164,35 +189,169 @@ store: new RedisStore({
 
 ---
 
-## 6. Execution Order
+## 6. Testing Infrastructure
 
-### Before Writing Any New Feature
+### Stack Decision: Vitest + Supertest + MongoDB Memory Server
 
-```
-1. Fix all P0 bugs (2 days)
-       ↓
-2. Write 5 core integration tests — Jest + Supertest (2–3 days)
-       ↓
-3. Set up GitHub Actions CI (run tests on every push) (1 day)
-       ↓
-4. Deploy backend to Railway (staging environment)
-       ↓
-5. Start Next.js frontend (project-camp-web)
-       ↓
-6. Wire frontend to staging API
-       ↓
-7. Frontend complete → Deploy to Vercel
-       ↓
-8. Rate limiter + Winston logger + Notes CRUD (parallel with frontend)
-```
+**Why Vitest over Jest:**
 
-**Why tests before frontend:** Without tests, every backend change during frontend development risks silently breaking auth flows, token rotation, or RBAC. The frontend will surface API bugs in confusing ways. Tests catch them at the source.
+| Factor | Vitest | Jest |
+|---|---|---|
+| **ESM support** | Native, zero config | Requires `--experimental-vm-modules` flag + Babel |
+| **This project uses `"type": "module"`** | Works out of the box | Painful; multiple workarounds needed |
+| **Speed** | ~2× faster (Vite-powered) | Slower cold start |
+| **API compatibility** | Same `describe` / `it` / `expect` as Jest | N/A |
+| **TypeScript** | Native (important for later migration) | Requires `ts-jest` or Babel |
 
-**Why deploy to staging before frontend is done:** CORS over HTTPS with `credentials: true`, environment variable issues, and cookie behavior across domains always have surprises. Find them in staging, not at launch.
+**The `"type": "module"` in `package.json` is the deciding factor.** Jest + ESM is a known pain point with no clean solution. Vitest was built for modern ESM-first projects.
+
+**Why MongoDB Memory Server:**
+- Tests must never touch the real database
+- Spins up an actual MongoDB instance in-process — tests use real Mongoose queries, not mocks
+- Fast (~200ms startup), zero external dependency, disposable after each test suite
 
 ---
 
-## 7. Deployment Targets
+### Test File Structure
+
+```
+project-base/
+└── tests/
+    ├── setup/
+    │   ├── globalSetup.js          ← Start MongoMemoryServer once before all suites
+    │   ├── testSetup.js            ← beforeEach/afterEach: clear all collections
+    │   └── fixtures/               ← Reusable data factories (not hardcoded objects)
+    │       ├── user.fixture.js      ← createUser(), createAdmin()
+    │       ├── project.fixture.js   ← createProject(ownerId)
+    │       └── task.fixture.js      ← createTask(projectId, assigneeId)
+    ├── integration/                ← API route tests via Supertest (most of your tests)
+    │   ├── auth/
+    │   │   ├── register.test.js
+    │   │   ├── login.test.js
+    │   │   ├── logout.test.js
+    │   │   ├── refreshToken.test.js
+    │   │   ├── changePassword.test.js
+    │   │   └── forgotPassword.test.js
+    │   ├── projects/
+    │   │   ├── createProject.test.js
+    │   │   ├── listProjects.test.js
+    │   │   ├── updateProject.test.js
+    │   │   ├── deleteProject.test.js
+    │   │   └── memberManagement.test.js
+    │   └── tasks/
+    │       ├── createTask.test.js
+    │       ├── updateTask.test.js
+    │       └── subtasks.test.js
+    └── unit/                       ← Pure function tests (no DB, no HTTP)
+        ├── validators/
+        │   ├── userRegisterSchema.test.js
+        │   └── userLoginSchema.test.js
+        └── utils/
+            ├── ApiError.test.js
+            └── asyncHandler.test.js
+```
+
+**Rule:** Integration tests cover ~80% of cases. Unit tests only for pure utility functions and validators — not controllers, not middlewares.
+
+---
+
+### Test Categories Explained
+
+| Type | What it tests | Uses DB? | Uses HTTP? |
+|---|---|---|---|
+| **Integration** | Full request → middleware → controller → DB → response cycle | Yes (Memory Server) | Yes (Supertest) |
+| **Unit** | Single function in isolation (Zod schema, ApiError shape) | No | No |
+
+**Do not write unit tests for controllers.** Controllers are orchestration code — they only make sense tested as a full HTTP round-trip. Mocking Mongoose inside a controller test gives you false confidence.
+
+---
+
+### Minimum Test Suite to Pass Before Frontend Work
+
+Write these 8 tests first. Everything else can be added incrementally.
+
+```
+✔ POST /auth/register          → 201, user created in DB
+✔ POST /auth/login             → 200, access+refresh cookies set  
+✔ POST /auth/login (wrong pw)  → 401
+✔ POST /auth/refresh-access-token → 200, new access token
+✔ GET  /api/v1/projects        → 200, authenticated user sees their projects
+✔ GET  /api/v1/projects        → 401, unauthenticated request
+✔ POST /api/v1/projects        → 201, project created and linked to user
+✔ DELETE /api/v1/projects/:id  → 403, non-admin member cannot delete
+```
+
+---
+
+### `vitest.config.js` (root level)
+
+```js
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+    test: {
+        globals: true,                        // no need to import describe/it/expect
+        environment: 'node',
+        globalSetup: './tests/setup/globalSetup.js',
+        setupFiles: ['./tests/setup/testSetup.js'],
+        coverage: {
+            provider: 'v8',
+            reporter: ['text', 'lcov'],
+            include: ['src/**'],
+            exclude: ['src/index.js'],
+        },
+    },
+});
+```
+
+---
+
+### GitHub Actions CI (`.github/workflows/test.yml`)
+
+```yaml
+name: Test
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: npm ci
+      - run: npm test
+```
+
+No external MongoDB needed — the Memory Server handles it in-process.
+
+---
+
+## 7. Execution Order
+
+### Revised (Post-P0)
+
+```
+✔ Fix all P0 bugs
+✔ Implement rate limiter
+       ↓
+Write Vitest + Supertest tests (8 core tests) — 2-3 days
+       ↓
+Set up GitHub Actions CI (tests on every push) — 1 day
+       ↓
+Deploy backend to Railway (staging)
+       ↓
+Migrate backend to TypeScript — 1-2 days (tests are the safety net)
+       ↓
+Start Next.js frontend (project-camp-web)
+       ↓
+Notes CRUD + DB indexes + Winston logger (parallel with frontend)
+       ↓
+Frontend complete → Deploy to Vercel + Railway production
+```
+
+---
+
+## 8. Deployment Targets
 
 | Layer | Platform | Rationale |
 |---|---|---|
@@ -205,15 +364,14 @@ store: new RedisStore({
 
 ---
 
-## 8. Deferred Decisions (Must Revisit Before Phase 2)
+## 9. Deferred Decisions (Must Revisit Before Phase 2)
 
 | Decision | Options | Deadline |
 |---|---|---|
 | MongoDB vs. PostgreSQL | Stay on MongoDB OR migrate now | Before Notes module is built |
-| TypeScript on backend | Add now OR use shared-types package | Before monorepo migration |
 | Organization model | Add as optional field now OR defer to post-launch | Before first external user |
 | Soft deletes | Add `deletedAt` now OR hard delete | Before Notes/Attachments are implemented |
 
 ---
 
-*Last updated: 2026-06-23. Source: architecture discussions in project planning session.*
+*Last updated: 2026-06-24. Source: architecture discussions in project planning session.*

@@ -1,33 +1,18 @@
 # TODO: Project Camp Backend
 
-> **Current State:** ~50% complete. The server **cannot start** in its current state. Critical bugs must be resolved before any feature work.
+> **Current State:** P0 bugs fixed, rate limiter implemented. Next step: testing infrastructure.
 >
 > **Audit Source:** [technical_state_audit.md](technical_state_audit.md)
 
----
-
-## 🔴 P0 — Critical (Server is Broken / Security Risk)
-
-These must be fixed before the server can run at all, or before any endpoint is trusted.
-
-
-
-### 2. Fix RBAC Param Mismatch — `GET /` Project Listing Returns 403
-**File:** [project.routes.js](../src/routers/project.routes.js)
-
-The root `GET /` route (list all projects) incorrectly mounts `checkProjectPermission`. There is no `:projectId` in this path, so `req.params.projectId` is `undefined`, causing every logged-in user to receive a 403 Forbidden when listing their projects. Remove or replace the permission middleware on this route.
-
-### 3. Fix RBAC Param Mismatch — Resend & Cancel Invitation Returns 403
-**File:** [projectInvite.routes.js](../src/routers/projectInvite.routes.js)
-
-The `/resend` and `/cancel` routes use `:invitationId` as a URL param, but `checkProjectPermission` reads `:projectId`. The middleware always gets `undefined`, blocking admins from managing invitations.
-
-### 4. Remove Cleartext Credential Logging
-**File:** [app.js](../src/app.js)
-
-The global debug middleware logs the full `req.body` to stdout for every request. For `/register`, `/login`, `/change-password`, and `/delete-user`, this dumps plaintext passwords into application logs. Either remove the middleware entirely or gate it behind `NODE_ENV === 'test'` only.
+## ✅ Completed
+- [x] Fix `z.email()` → `z.string().email()` Zod syntax crash
+- [x] Remove RBAC middleware from `GET /` project listing (403 fix)
+- [x] Fix RBAC param mismatch on invitation resend/cancel routes
+- [x] Remove cleartext credential logging from debug middleware
+- [x] Implement rate limiter (`express-rate-limit`) — two-tier: auth strict + global DoS
 
 ---
+
 
 ## 🟠 P1 — High Priority (Missing Validation / Security Gaps)
 
@@ -41,29 +26,9 @@ No input schema is mounted on this route — the controller receives raw, unvali
 
 Takes `email` + `password` in the body with no Zod schema guard.
 
-### 7. Add Rate Limiting on Auth Routes
-**Package:** `express-rate-limit` (not installed)
-
-No rate limiter exists on `/login`, `/register`, or `/reset-password`. This exposes the API to brute-force attacks. Install and configure `express-rate-limit` globally or on sensitive auth routes.
-
 ---
 
 ## 🟡 P2 — Medium Priority (Missing Features / Core Logic)
-
-### 8. Implement Notes Module (Controllers + Routes)
-**Files:** [note.controllers.js](../src/controllers/note.controllers.js), [note.routes.js](../src/routers/note.routes.js), [app.js](../src/app.js)
-
-The Note model ([note.model.js](../src/models/note.model.js)) is complete. Everything else is a stub or commented out.
-
-- Implement controller functions: `getNotes`, `createNote`, `getNoteById`, `updateNote`, `deleteNote`
-- Wire routes with correct `verifyJWT` + `checkProjectPermission` guards:
-  - `GET /:projectId` — any member
-  - `POST /:projectId` — Admin only
-  - `GET /:projectId/n/:noteId` — any member
-  - `PUT /:projectId/n/:noteId` — Admin only
-  - `DELETE /:projectId/n/:noteId` — Admin only
-- Mount note router in `app.js` at `/api/v1/notes`
-- Add Zod validation schemas for note create/update in [validators/index.js](../src/validators/index.js)
 
 ### 9. Implement Task File Attachments
 **Files:** [task.routes.js](../src/routers/task.routes.js), [task.controllers.js](../src/controllers/task.controllers.js)
@@ -108,14 +73,6 @@ Decide on one convention and apply it consistently.
 - `loginUser` returns `201` — should be `200` ([auth.controllers.js](../src/controllers/auth.controllers.js))
 - Several GET/PATCH/DELETE project operations return `201` ([project.controllers.js](../src/controllers/project.controllers.js))
 
-### 15. Align Route Path Names with PRD
-- `/refresh-access-token` → `/refresh-token`
-- `/me` → `/current-user`
-
-### 16. Move `nodemon` to `devDependencies`
-**File:** [package.json](../package.json)
-
-`nodemon` is listed under `dependencies` — it is a dev-only tool.
 
 ### 17. Fix `ApiResponse` Status Code Inconsistency
 Some responses pass `200` to the `ApiResponse` constructor but call `res.status(201)` — or vice versa. Audit and align throughout the codebase.
@@ -128,34 +85,41 @@ These do not block development but must exist before any production deployment.
 
 | # | Task | Rationale |
 |---|------|-----------|
-| F1 | **Add test infrastructure** (Jest or Vitest) | `npm test` currently crashes. Zero unit, integration, or contract tests exist. |
-| F2 | **Replace `console` logs with structured logger** (Winston or Pino) | Enables environment-scoped log levels and prevents sensitive data leakage in production. |
-| F3 | **Add Redis caching layer** | Minimize DB lookups for session validation and project configs. |
-| F4 | **Set up CI/CD pipeline** | No automated testing or deployment pipeline exists. |
+| F1 | **Add test infrastructure** — **Vitest + Supertest + MongoDB Memory Server** | `npm test` crashes. Stack chosen: see [design_choices.md](design_choices.md) §Testing. |
+| F2 | **Migrate backend to TypeScript** | Frontend will be TS; shared types require it. Migrate after tests pass. See [design_choices.md](design_choices.md) §TypeScript. |
+| F3 | **Replace `console` logs with structured logger** (Winston or Pino) | Enables environment-scoped log levels and prevents sensitive data leakage in production. |
+| F4 | **Add Redis caching layer** | Minimize DB lookups for session validation and project configs. Phase 3 only. |
+| F5 | **Set up CI/CD pipeline** (GitHub Actions) | No automated testing or deployment pipeline exists. |
 
 ---
 
 ## ✅ Verification Checklist
 
-After completing P0 fixes, validate the following before moving to P1/P2:
+### P0 (Completed)
+- [x] `npm run dev` starts without throwing `TypeError: z.email is not a function`
+- [x] `GET /api/v1/projects` returns project list for authenticated user (not 403)
+- [x] Password does not appear in stdout when calling `/login` or `/register`
+- [x] Rate limiter blocks brute-force on `/login`, `/register`, `/forgot-password`, `/reset-password`
 
-- [ ] `npm run dev` starts without throwing `TypeError: z.email is not a function`
-- [ ] `GET /api/v1/projects` returns project list for authenticated user (not 403)
-- [ ] `POST /api/v1/projects/:projectId/invitations/:invitationId/resend` succeeds for Admin (not 403)
-- [ ] `POST /api/v1/projects/:projectId/invitations/:invitationId/cancel` succeeds for Admin (not 403)
-- [ ] Password does not appear in stdout when calling `/login` or `/register`
-- [ ] `GET /api/v1/auth/get-all-users` without token returns 401
-- [ ] `DELETE /api/v1/projects/:id` as non-admin member returns 403
+### Testing (Next)
+- [ ] `npm test` runs Vitest and exits 0
+- [ ] `POST /api/v1/auth/register` → 201, user in DB
+- [ ] `POST /api/v1/auth/login` → 200, cookies set
+- [ ] `POST /api/v1/auth/refresh-access-token` → new access token returned
+- [ ] `GET /api/v1/projects` with valid token → 200, array returned
+- [ ] `POST /api/v1/projects` with valid token → 201, project created
+- [ ] `GET /api/v1/auth/get-all-users` without token → 401
+- [ ] `DELETE /api/v1/projects/:id` as non-admin member → 403
 
 ---
 
-## 📊 Maturity Scorecard (from Audit)
+## 📊 Maturity Scorecard
 
 | Dimension | Score | Notes |
 |-----------|-------|-------|
-| Product Maturity | 4 / 10 | Notes & Attachments missing; core flows broken |
+| Product Maturity | 4 / 10 | Notes & Attachments missing |
 | Architecture | 7 / 10 | Clean layering, SOLID principles, good normalization |
-| Code Quality | 6 / 10 | Readable but compile errors, HTTP inconsistencies |
+| Code Quality | 6 / 10 | Readable; HTTP method/status code inconsistencies remain |
 | Scalability | 5 / 10 | No caching, no indexes |
-| Security | 4 / 10 | Credential leakage in logs, broken RBAC |
-| Production Readiness | 2 / 10 | Server won't start; no tests, no CI/CD |
+| Security | 6 / 10 | ↑ Credential logging fixed, RBAC fixed, rate limiter added |
+| Production Readiness | 3 / 10 | ↑ Server starts; still no tests, no CI/CD |
