@@ -15,6 +15,7 @@ import {
     updateUserProfile
 } from "../controllers/auth.controllers.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { authRateLimiter } from "../middlewares/rateLimiter.middleware.js";
 import { validate, createValidationLayer } from "../middlewares/validation.middleware.js";
 import { sanitizeAndValidateInput } from "../middlewares/sanitization.middleware.js";
 import {
@@ -36,8 +37,9 @@ import {
 
 const router = Router();
 
-// Public routes
+// Public routes — brute-force targets: strict authRateLimiter applied (10 req / 15 min / IP)
 router.route("/register").post(
+    authRateLimiter,
     ...createValidationLayer({
         schema: userRegisterSchema,
         sanitize: true,
@@ -48,6 +50,7 @@ router.route("/register").post(
 );
 
 router.route("/login").post(
+    authRateLimiter,
     ...createValidationLayer({
         schema: userLoginSchema,
         sanitize: true,
@@ -68,6 +71,7 @@ router.route("/refresh-access-token").post(
 );
 
 router.route("/forgot-password").post(
+    authRateLimiter,
     ...createValidationLayer({
         schema: userForgotPasswordSchema,
         sanitize: true,
@@ -77,6 +81,7 @@ router.route("/forgot-password").post(
 );
 
 router.route("/reset-password/:resetToken").post(
+    authRateLimiter,
     ...createValidationLayer({
         schema: userResetForgotPasswordSchema,
         sanitize: true

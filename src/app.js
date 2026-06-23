@@ -42,6 +42,10 @@ import taskRoutes from "./routers/task.routes.js";
 import projectInviteRoutes from "./routers/projectInvite.routes.js";
 import projectRoutes from "./routers/project.routes.js";
 import noteRoutes from "./routers/note.routes.js";
+import { globalRateLimiter } from "./middlewares/rateLimiter.middleware.js";
+
+// rate limiter...
+app.use('/api/', globalRateLimiter);
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/healthcheck', healthRoutes);
