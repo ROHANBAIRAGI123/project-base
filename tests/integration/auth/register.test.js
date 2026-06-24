@@ -18,4 +18,10 @@ describe('POST /api/v1/auth/register', () => {
     test.todo('should return 400 if required fields (username, email, password) are missing');
 
     test.todo('should not return the password field in the response body');
+
+    test.todo('should return 400 when username is already taken (distinct from email conflict)');
+
+    test.todo('should return 429 when registration is attempted more than 10 times from the same IP within 15 minutes');
+
+    test.todo('should strip XSS payloads from username and email fields before processing');
 });

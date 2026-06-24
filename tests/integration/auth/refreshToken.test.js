@@ -17,4 +17,8 @@ describe('POST /api/v1/auth/refresh-access-token', () => {
     test.todo('should return 401 when refresh token is invalid or tampered');
 
     test.todo('should return 401 when refresh token has been rotated (used after a new one was issued)');
+
+    test.todo('should return 401 when refresh token is expired (JWT expiry exceeded)');
+
+    test.todo('should set new accessToken and refreshToken cookies on successful token refresh');
 });

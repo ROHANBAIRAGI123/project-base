@@ -11,4 +11,8 @@ describe('GET /api/v1/projects', () => {
     test.todo('should not return projects that the user is not a member of');
 
     test.todo('should include member count in each project object');
+
+    test.todo('should paginate results when page and limit query params are provided');
+
+    test.todo('should return 400 when pagination params are invalid (e.g. page=abc)');
 });

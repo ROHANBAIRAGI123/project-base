@@ -21,4 +21,8 @@ describe('POST /api/v1/auth/reset-password/:resetToken', () => {
     test.todo('should return 400 when reset token does not exist in the database');
 
     test.todo('should return 400 when new password does not meet requirements');
+
+    test.todo('should return 400 when newPassword and confirmPassword do not match');
+
+    test.todo('should clear forgotPasswordToken and forgotPasswordTokenExpiry after a successful reset');
 });

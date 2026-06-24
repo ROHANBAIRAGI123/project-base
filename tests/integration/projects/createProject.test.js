@@ -9,4 +9,8 @@ describe('POST /api/v1/projects', () => {
     test.todo('should return 400 when project name is missing');
 
     test.todo('should automatically add the creator as an Admin member of the project');
+
+    test.todo('should strip XSS payloads from the project name and description fields');
+
+    test.todo('should return 400 when project name exceeds the maximum allowed length');
 });

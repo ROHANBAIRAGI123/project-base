@@ -9,6 +9,10 @@ describe('POST /api/v1/:projectId/tasks/:taskId/subtasks — Create Subtask', ()
     test.todo('should return 403 when a Member tries to create a subtask');
 
     test.todo('should return 400 when subtask title is missing');
+
+    test.todo('should return 400 when the parent taskId is not a valid MongoDB ObjectId');
+
+    test.todo('should return 404 when the parent taskId does not exist within this project');
 });
 
 describe('PUT /api/v1/:projectId/tasks/:taskId/subtasks/:subTaskId — Update Subtask', () => {

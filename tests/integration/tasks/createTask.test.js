@@ -17,6 +17,10 @@ describe('POST /api/v1/:projectId/tasks — Create Task', () => {
     test.todo('should return 400 when task title is missing');
 
     test.todo('should return 400 when assigned user is not a member of the project');
+
+    test.todo('should return 400 when task title contains XSS payload (sanitization check)');
+
+    test.todo('should return 400 when task priority is not one of the valid enum values');
 });
 
 describe('GET /api/v1/:projectId/tasks — List Tasks', () => {

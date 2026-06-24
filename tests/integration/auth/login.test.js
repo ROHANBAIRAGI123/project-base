@@ -17,4 +17,8 @@ describe('POST /api/v1/auth/login', () => {
     test.todo('should return 400 when email or password fields are missing');
 
     test.todo('should not expose the password or refreshToken in the response body');
+
+    test.todo('should return 403 when the user exists but email is not yet verified');
+
+    test.todo('should return 429 when login is attempted more than 10 times from the same IP within 15 minutes');
 });
