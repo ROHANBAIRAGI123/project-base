@@ -16,14 +16,16 @@ import {
   successResponseSchema
 } from "../validators/response.schemas.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { getProjects,
-    createProject,
-    getProjectById,
-    updateProject,
-    deleteProject,
-    getProjectMembers,
-    updateMemberRole,
-    removeMember} from "../controllers/project.controllers.js";
+import {
+  getProjects,
+  createProject,
+  getProjectById,
+  updateProject,
+  deleteProject,
+  getProjectMembers,
+  updateMemberRole,
+  removeMember
+} from "../controllers/project.controllers.js";
 import { checkProjectPermission } from "../middlewares/permission.middleware.js";
 import { UserRolesEnum } from "../utils/constants.js";
 
@@ -45,12 +47,13 @@ router.route("/").post(
   process.env.NODE_ENV === 'development' ? validateResponse(successResponseSchema) : (req, res, next) => next(),
   verifyJWT,
   createProject,
-).get(
-  validate(paginationSchema),
-  validateResponse(projectListResponseSchema),
-  verifyJWT,
-  getProjects
-);
+)
+  .get(
+    validate(paginationSchema),
+    validateResponse(projectListResponseSchema),
+    verifyJWT,
+    getProjects
+  );
 
 // Get single project
 router.route("/:projectId").get(

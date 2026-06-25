@@ -35,6 +35,7 @@
     "mailgen": "^2.0.32",
     "mongoose": "^9.0.2",
     "nodemailer": "^7.0.12",
+    "winston": "^3.19.0",
     "zod": "^4.2.1"
   },
   "devDependencies": {

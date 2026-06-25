@@ -3,7 +3,7 @@
 // Usage: const wrappedFn = asyncHandler(async (req, res, next) => { ... });
 
 import { vi } from "vitest";
-import { asyncHandler } from "../../../src/utils/asyncHandler.js";
+import { asyncHandler } from "../../../src/utils/AsyncHandler.js";
 
 describe('asyncHandler — async error wrapper', () => {
     test('should call the wrapped function with (req, res, next)', () => {
