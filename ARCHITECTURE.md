@@ -38,6 +38,7 @@ src/
 ### 1. Request Lifecycle (Defense-in-Depth)
 
 Every incoming request passes through a rigorous gauntlet before reaching business logic:
+
 1. **Global Middleware**: CORS, Rate Limiting, JSON parsing limit (`16kb`), URL encoding.
 2. **Sanitization Middleware (`sanitizeAndValidateInput`)**: Recursively strips XSS vectors and SQLi patterns.
 3. **Authentication Middleware (`verifyJWT`)**: Extracts and verifies user identity via stateless tokens.
@@ -49,6 +50,7 @@ Every incoming request passes through a rigorous gauntlet before reaching busine
 ### 2. Multi-Tenant Role-Based Access Control (RBAC)
 
 The system is "multi-tenant" meaning users interact within the bounded context of a specific `Project`.
+
 - **Global Identity**: Managed by the `User` model.
 - **Contextual Role**: Managed by the `ProjectMember` pivot table. A user can be an `ADMIN` in Project A, but a `MEMBER` in Project B.
 - **Middleware Integration**: `permission.middleware.js` intercepts routes containing `/:projectId/` to dynamically verify access rights.

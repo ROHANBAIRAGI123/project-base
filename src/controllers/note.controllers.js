@@ -9,128 +9,149 @@ import mongoose from "mongoose";
 
 // create note
 export const createNote = asyncHandler(async (req, res) => {
-    const { title, content, status } = req.body;
-    const { projectId } = req.params;
+  const { title, content, status } = req.body;
+  const { projectId } = req.params;
 
-    const note = await Note.create({
-        title,
-        content,
-        project: projectId,
-        user: req.user._id,
-        status: status || NotesStatusEnum.PERSONAL,
-    });
+  const note = await Note.create({
+    title,
+    content,
+    project: projectId,
+    user: req.user._id,
+    status: status || NotesStatusEnum.PERSONAL,
+  });
 
-    res.status(201).json(new ApiResponse(201, note, "Note created successfully"));
+  res.status(201).json(new ApiResponse(201, note, "Note created successfully"));
 });
 
 // get notes for a project
 export const getNotes = asyncHandler(async (req, res) => {
-    const { projectId } = req.params;
+  const { projectId } = req.params;
 
-    const notes = await Note.find({
-        project: projectId,
-        $or: [
-            { status: NotesStatusEnum.SHARED },
-            { user: req.user._id },
-        ],
-    }).populate("user", "fullname email");
+  const notes = await Note.find({
+    project: projectId,
+    $or: [{ status: NotesStatusEnum.SHARED }, { user: req.user._id }],
+  }).populate("user", "fullname email");
 
-    res.status(200).json(new ApiResponse(200, notes, "Notes fetched successfully"));
+  res
+    .status(200)
+    .json(new ApiResponse(200, notes, "Notes fetched successfully"));
 });
 
 // get note by id
 export const getNoteById = asyncHandler(async (req, res) => {
-    const { noteId, projectId } = req.params;
+  const { noteId, projectId } = req.params;
 
-    const note = await Note.findOne({
-        _id: new mongoose.Types.ObjectId(noteId),
-        project: projectId,
-        $or: [
-            { status: NotesStatusEnum.SHARED },
-            { user: req.user._id },
-        ],
-    }).populate("user", "fullname email");
+  const note = await Note.findOne({
+    _id: new mongoose.Types.ObjectId(noteId),
+    project: projectId,
+    $or: [{ status: NotesStatusEnum.SHARED }, { user: req.user._id }],
+  }).populate("user", "fullname email");
 
-    if (!note) {
-        throw new ApiError(404, "Note not found or you do not have permission to view it");
-    }
+  if (!note) {
+    throw new ApiError(
+      404,
+      "Note not found or you do not have permission to view it",
+    );
+  }
 
-    res.status(200).json(new ApiResponse(200, note, "Note fetched successfully"));
+  res.status(200).json(new ApiResponse(200, note, "Note fetched successfully"));
 });
 
 // update note
 export const updateNote = asyncHandler(async (req, res) => {
-    const { noteId, projectId } = req.params;
-    const { title, content, status } = req.body;
+  const { noteId, projectId } = req.params;
+  const { title, content, status } = req.body;
 
-    const noteObjectId = new mongoose.Types.ObjectId(noteId);
+  const noteObjectId = new mongoose.Types.ObjectId(noteId);
 
-    // Ownership check — only the note owner can update
-    const existingNote = await Note.findOne({ _id: noteObjectId, project: projectId }).select("_id user");
-    if (!existingNote) {
-        throw new ApiError(404, "Note not found");
-    }
-    if (existingNote.user.toString() !== req.user._id.toString()) {
-        throw new ApiError(403, "You are not authorized to update this note");
-    }
+  // Ownership check — only the note owner can update
+  const existingNote = await Note.findOne({
+    _id: noteObjectId,
+    project: projectId,
+  }).select("_id user");
+  if (!existingNote) {
+    throw new ApiError(404, "Note not found");
+  }
+  if (existingNote.user.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "You are not authorized to update this note");
+  }
 
-    const updatedNote = await Note.findOneAndUpdate(
-        { _id: noteObjectId, project: projectId, user: req.user._id },
-        {
-            ...(title && { title }),
-            ...(content && { content }),
-            ...(status && { status }),
-        },
-        { new: true, runValidators: true }
-    );
+  const updatedNote = await Note.findOneAndUpdate(
+    { _id: noteObjectId, project: projectId, user: req.user._id },
+    {
+      ...(title && { title }),
+      ...(content && { content }),
+      ...(status && { status }),
+    },
+    { new: true, runValidators: true },
+  );
 
-    res.status(200).json(new ApiResponse(200, updatedNote, "Note updated successfully"));
+  res
+    .status(200)
+    .json(new ApiResponse(200, updatedNote, "Note updated successfully"));
 });
 
 // delete note
 export const deleteNote = asyncHandler(async (req, res) => {
-    const { noteId, projectId } = req.params;
-    const noteObjectId = new mongoose.Types.ObjectId(noteId);
+  const { noteId, projectId } = req.params;
+  const noteObjectId = new mongoose.Types.ObjectId(noteId);
 
-    // Ownership check — only the note owner can delete
-    const existingNote = await Note.findOne({ _id: noteObjectId, project: projectId }).select("_id user");
-    if (!existingNote) {
-        throw new ApiError(404, "Note not found");
-    }
-    if (existingNote.user.toString() !== req.user._id.toString()) {
-        throw new ApiError(403, "You are not authorized to delete this note");
-    }
+  // Ownership check — only the note owner can delete
+  const existingNote = await Note.findOne({
+    _id: noteObjectId,
+    project: projectId,
+  }).select("_id user");
+  if (!existingNote) {
+    throw new ApiError(404, "Note not found");
+  }
+  if (existingNote.user.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "You are not authorized to delete this note");
+  }
 
-    await Note.findOneAndDelete({ _id: noteObjectId, project: projectId, user: req.user._id });
+  await Note.findOneAndDelete({
+    _id: noteObjectId,
+    project: projectId,
+    user: req.user._id,
+  });
 
-    res.status(200).json(new ApiResponse(200, null, "Note deleted successfully"));
+  res.status(200).json(new ApiResponse(200, null, "Note deleted successfully"));
 });
 
 // change note status (PERSONAL <-> SHARED)
 export const changeNoteStatus = asyncHandler(async (req, res) => {
-    const { noteId, projectId } = req.params;
-    const { status } = req.body;
-    const noteObjectId = new mongoose.Types.ObjectId(noteId);
+  const { noteId, projectId } = req.params;
+  const { status } = req.body;
+  const noteObjectId = new mongoose.Types.ObjectId(noteId);
 
-    // Ownership check — only the note owner can change visibility
-    const existingNote = await Note.findOne({ _id: noteObjectId, project: projectId }).select("_id user status");
-    if (!existingNote) {
-        throw new ApiError(404, "Note not found");
-    }
-    if (existingNote.user.toString() !== req.user._id.toString()) {
-        throw new ApiError(403, "You are not authorized to change the status of this note");
-    }
-    if (existingNote.status === status) {
-        throw new ApiError(400, `Note status is already '${status}'`);
-    }
-
-    const updatedNote = await Note.findOneAndUpdate(
-        { _id: noteObjectId, project: projectId, user: req.user._id },
-        { status },
-        { new: true, runValidators: true }
+  // Ownership check — only the note owner can change visibility
+  const existingNote = await Note.findOne({
+    _id: noteObjectId,
+    project: projectId,
+  }).select("_id user status");
+  if (!existingNote) {
+    throw new ApiError(404, "Note not found");
+  }
+  if (existingNote.user.toString() !== req.user._id.toString()) {
+    throw new ApiError(
+      403,
+      "You are not authorized to change the status of this note",
     );
+  }
+  if (existingNote.status === status) {
+    throw new ApiError(400, `Note status is already '${status}'`);
+  }
 
-    res.status(200).json(new ApiResponse(200, updatedNote, "Note status updated successfully"));
+  const updatedNote = await Note.findOneAndUpdate(
+    { _id: noteObjectId, project: projectId, user: req.user._id },
+    { status },
+    { new: true, runValidators: true },
+  );
+
+  res
+    .status(200)
+    .json(
+      new ApiResponse(200, updatedNote, "Note status updated successfully"),
+    );
 });
 
 /*

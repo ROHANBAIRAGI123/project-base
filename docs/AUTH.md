@@ -48,15 +48,15 @@ src/
 
 ### Technology Stack
 
-| Component | Technology |
-|-----------|------------|
-| Runtime | Node.js |
-| Framework | Express.js 5 |
-| Database | MongoDB with Mongoose |
-| Authentication | JWT (jsonwebtoken) |
-| Password Hashing | bcryptjs |
-| Validation | Zod |
-| Email | Nodemailer + Mailgen |
+| Component        | Technology            |
+| ---------------- | --------------------- |
+| Runtime          | Node.js               |
+| Framework        | Express.js 5          |
+| Database         | MongoDB with Mongoose |
+| Authentication   | JWT (jsonwebtoken)    |
+| Password Hashing | bcryptjs              |
+| Validation       | Zod                   |
+| Email            | Nodemailer + Mailgen  |
 
 ---
 
@@ -200,26 +200,26 @@ src/
 
 ### Public Endpoints (No Authentication Required)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/v1/auth/register` | Register new user |
-| `POST` | `/api/v1/auth/login` | Authenticate user |
-| `GET` | `/api/v1/auth/verify-email/:token` | Verify email address |
-| `POST` | `/api/v1/auth/forgot-password` | Request password reset |
-| `POST` | `/api/v1/auth/reset-password/:token` | Reset password |
-| `POST` | `/api/v1/auth/refresh-access-token` | Refresh access token |
-| `GET` | `/api/v1/auth/get-all-users` | Get all users (should be protected) |
+| Method | Endpoint                             | Description                         |
+| ------ | ------------------------------------ | ----------------------------------- |
+| `POST` | `/api/v1/auth/register`              | Register new user                   |
+| `POST` | `/api/v1/auth/login`                 | Authenticate user                   |
+| `GET`  | `/api/v1/auth/verify-email/:token`   | Verify email address                |
+| `POST` | `/api/v1/auth/forgot-password`       | Request password reset              |
+| `POST` | `/api/v1/auth/reset-password/:token` | Reset password                      |
+| `POST` | `/api/v1/auth/refresh-access-token`  | Refresh access token                |
+| `GET`  | `/api/v1/auth/get-all-users`         | Get all users (should be protected) |
 
 ### Protected Endpoints (Authentication Required)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/v1/auth/logout` | Logout user |
-| `POST` | `/api/v1/auth/delete-user` | Delete user account |
-| `GET` | `/api/v1/auth/me` | Get current user profile |
-| `PATCH` | `/api/v1/auth/me` | Update user profile |
-| `PATCH` | `/api/v1/auth/change-password` | Change password |
-| `POST` | `/api/v1/auth/send-verification-email` | Resend verification email |
+| Method  | Endpoint                               | Description               |
+| ------- | -------------------------------------- | ------------------------- |
+| `POST`  | `/api/v1/auth/logout`                  | Logout user               |
+| `POST`  | `/api/v1/auth/delete-user`             | Delete user account       |
+| `GET`   | `/api/v1/auth/me`                      | Get current user profile  |
+| `PATCH` | `/api/v1/auth/me`                      | Update user profile       |
+| `PATCH` | `/api/v1/auth/change-password`         | Change password           |
+| `POST`  | `/api/v1/auth/send-verification-email` | Resend verification email |
 
 ---
 
@@ -230,6 +230,7 @@ src/
 Register a new user account.
 
 **Request Body:**
+
 ```json
 {
   "username": "johndoe",
@@ -240,12 +241,14 @@ Register a new user account.
 ```
 
 **Validation Rules:**
+
 - `username`: 3-30 chars, lowercase, alphanumeric with `-` and `_`
 - `email`: Valid email format, max 254 chars
 - `password`: Min 8 chars, must include uppercase, lowercase, number, special char
 - `fullname`: 2-100 chars, letters and spaces only
 
 **Success Response (201):**
+
 ```json
 {
   "success": true,
@@ -266,6 +269,7 @@ Register a new user account.
 ```
 
 **Error Responses:**
+
 - `400` - Username or email already in use
 - `400` - Validation failed
 
@@ -276,6 +280,7 @@ Register a new user account.
 Authenticate user and receive tokens.
 
 **Request Body:**
+
 ```json
 {
   "email": "john@example.com",
@@ -284,6 +289,7 @@ Authenticate user and receive tokens.
 ```
 
 **Success Response (200):**
+
 ```json
 {
   "success": true,
@@ -304,10 +310,12 @@ Authenticate user and receive tokens.
 ```
 
 **Cookies Set:**
+
 - `accessToken` - HTTP-only, Secure
 - `refreshToken` - HTTP-only, Secure
 
 **Error Responses:**
+
 - `401` - Invalid email
 - `401` - Invalid password
 
@@ -318,12 +326,15 @@ Authenticate user and receive tokens.
 Logout and invalidate tokens.
 
 **Headers:**
+
 ```
 Authorization: Bearer <accessToken>
 ```
-*Or use cookie-based authentication*
+
+_Or use cookie-based authentication_
 
 **Success Response (200):**
+
 ```json
 {
   "success": true,
@@ -334,6 +345,7 @@ Authorization: Bearer <accessToken>
 ```
 
 **Cookies Cleared:**
+
 - `accessToken`
 - `refreshToken`
 
@@ -344,11 +356,13 @@ Authorization: Bearer <accessToken>
 Get current authenticated user's profile.
 
 **Headers:**
+
 ```
 Authorization: Bearer <accessToken>
 ```
 
 **Success Response (200):**
+
 ```json
 {
   "success": true,
@@ -377,11 +391,13 @@ Authorization: Bearer <accessToken>
 Change password for authenticated user.
 
 **Headers:**
+
 ```
 Authorization: Bearer <accessToken>
 ```
 
 **Request Body:**
+
 ```json
 {
   "oldPassword": "CurrentPass123!",
@@ -391,6 +407,7 @@ Authorization: Bearer <accessToken>
 ```
 
 **Success Response (200):**
+
 ```json
 {
   "success": true,
@@ -401,6 +418,7 @@ Authorization: Bearer <accessToken>
 ```
 
 **Error Responses:**
+
 - `401` - Invalid current password
 - `400` - Password confirmation doesn't match
 
@@ -411,6 +429,7 @@ Authorization: Bearer <accessToken>
 Initiate password reset process.
 
 **Request Body:**
+
 ```json
 {
   "email": "john@example.com"
@@ -418,6 +437,7 @@ Initiate password reset process.
 ```
 
 **Success Response (200):**
+
 ```json
 {
   "success": true,
@@ -434,9 +454,11 @@ Initiate password reset process.
 Reset password using token from email.
 
 **URL Parameters:**
+
 - `resetToken` - Token received in email
 
 **Request Body:**
+
 ```json
 {
   "newPassword": "NewSecurePass789!",
@@ -445,6 +467,7 @@ Reset password using token from email.
 ```
 
 **Success Response (200):**
+
 ```json
 {
   "success": true,
@@ -455,6 +478,7 @@ Reset password using token from email.
 ```
 
 **Error Responses:**
+
 - `400` - Invalid or expired reset token
 
 ---
@@ -467,6 +491,7 @@ Get new access token using refresh token.
 Send refresh token via cookie or Authorization header.
 
 **Success Response (200):**
+
 ```json
 {
   "success": true,
@@ -485,48 +510,48 @@ Send refresh token via cookie or Authorization header.
 
 ### Password Security
 
-| Feature | Implementation |
-|---------|----------------|
-| Hashing | bcrypt with 10 salt rounds |
-| Minimum Length | 8 characters |
-| Complexity | Uppercase, lowercase, number, special char required |
-| Storage | Never stored in plain text |
+| Feature        | Implementation                                      |
+| -------------- | --------------------------------------------------- |
+| Hashing        | bcrypt with 10 salt rounds                          |
+| Minimum Length | 8 characters                                        |
+| Complexity     | Uppercase, lowercase, number, special char required |
+| Storage        | Never stored in plain text                          |
 
 ### Token Security
 
-| Feature | Implementation |
-|---------|----------------|
-| Access Token | Short-lived (configured via env) |
-| Refresh Token | Long-lived, stored in DB |
+| Feature        | Implementation                    |
+| -------------- | --------------------------------- |
+| Access Token   | Short-lived (configured via env)  |
+| Refresh Token  | Long-lived, stored in DB          |
 | Token Rotation | New refresh token on each refresh |
-| Storage | HTTP-only, Secure cookies |
+| Storage        | HTTP-only, Secure cookies         |
 
 ### Email Verification
 
-| Feature | Implementation |
-|---------|----------------|
-| Token Generation | crypto.randomBytes(20) |
-| Token Storage | SHA-256 hashed |
-| Expiry | 20 minutes |
-| Single Use | Cleared after verification |
+| Feature          | Implementation             |
+| ---------------- | -------------------------- |
+| Token Generation | crypto.randomBytes(20)     |
+| Token Storage    | SHA-256 hashed             |
+| Expiry           | 20 minutes                 |
+| Single Use       | Cleared after verification |
 
 ### Password Reset
 
-| Feature | Implementation |
-|---------|----------------|
+| Feature          | Implementation         |
+| ---------------- | ---------------------- |
 | Token Generation | crypto.randomBytes(20) |
-| Token Storage | SHA-256 hashed |
-| Expiry | 20 minutes |
-| Single Use | Cleared after reset |
+| Token Storage    | SHA-256 hashed         |
+| Expiry           | 20 minutes             |
+| Single Use       | Cleared after reset    |
 
 ### Input Validation & Sanitization
 
-| Feature | Implementation |
-|---------|----------------|
-| Schema Validation | Zod |
-| XSS Protection | Input sanitization middleware |
-| SQL Injection | Pattern detection |
-| Content Type | Validated |
+| Feature           | Implementation                |
+| ----------------- | ----------------------------- |
+| Schema Validation | Zod                           |
+| XSS Protection    | Input sanitization middleware |
+| SQL Injection     | Pattern detection             |
+| Content Type      | Validated                     |
 
 ---
 
@@ -553,12 +578,12 @@ Send refresh token via cookie or Authorization header.
 ```javascript
 // Payload
 {
-  _id: "user_id"
+  _id: "user_id";
 }
 
 // Configuration
 {
-  expiresIn: process.env.REFRESH_TOKEN_EXPIRY  // e.g., "7d"
+  expiresIn: process.env.REFRESH_TOKEN_EXPIRY; // e.g., "7d"
 }
 ```
 
@@ -566,8 +591,8 @@ Send refresh token via cookie or Authorization header.
 
 ```javascript
 const options = {
-  httpOnly: true,  // Prevents XSS attacks
-  secure: true     // HTTPS only
+  httpOnly: true, // Prevents XSS attacks
+  secure: true, // HTTPS only
 };
 ```
 
@@ -581,14 +606,24 @@ const options = {
 userRegisterSchema = {
   body: {
     email: z.string().email().toLowerCase(),
-    username: z.string().min(3).max(30).toLowerCase()
-              .regex(/^[a-z0-9_-]+$/),
-    password: z.string().min(8).max(128)
-              .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/),
-    fullname: z.string().min(2).max(100)
-              .regex(/^[a-zA-Z\s'-]+$/)
-  }
-}
+    username: z
+      .string()
+      .min(3)
+      .max(30)
+      .toLowerCase()
+      .regex(/^[a-z0-9_-]+$/),
+    password: z
+      .string()
+      .min(8)
+      .max(128)
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/),
+    fullname: z
+      .string()
+      .min(2)
+      .max(100)
+      .regex(/^[a-zA-Z\s'-]+$/),
+  },
+};
 ```
 
 ### Login Schema
@@ -598,9 +633,9 @@ userLoginSchema = {
   body: {
     email: z.string().email().optional(),
     username: z.string().optional(),
-    password: z.string().min(1)
-  }
-}
+    password: z.string().min(1),
+  },
+};
 // Requires either email OR username
 ```
 
@@ -627,12 +662,12 @@ userLoginSchema = {
 
 ### Common Error Codes
 
-| Code | Description |
-|------|-------------|
-| `400` | Bad Request - Validation failed |
+| Code  | Description                                 |
+| ----- | ------------------------------------------- |
+| `400` | Bad Request - Validation failed             |
 | `401` | Unauthorized - Invalid credentials or token |
-| `404` | Not Found - User not found |
-| `500` | Internal Server Error |
+| `404` | Not Found - User not found                  |
+| `500` | Internal Server Error                       |
 
 ---
 
@@ -668,41 +703,41 @@ CORS_ORIGIN=http://localhost:3000
 ```javascript
 // Register
 const register = async (userData) => {
-  const response = await fetch('/api/v1/auth/register', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(userData)
+  const response = await fetch("/api/v1/auth/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(userData),
   });
   return response.json();
 };
 
 // Login
 const login = async (credentials) => {
-  const response = await fetch('/api/v1/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include', // Important for cookies
-    body: JSON.stringify(credentials)
+  const response = await fetch("/api/v1/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include", // Important for cookies
+    body: JSON.stringify(credentials),
   });
   return response.json();
 };
 
 // Protected Request
 const getProfile = async () => {
-  const response = await fetch('/api/v1/auth/me', {
-    method: 'GET',
-    credentials: 'include' // Include cookies
+  const response = await fetch("/api/v1/auth/me", {
+    method: "GET",
+    credentials: "include", // Include cookies
   });
   return response.json();
 };
 
 // OR with Authorization header
 const getProfileWithToken = async (accessToken) => {
-  const response = await fetch('/api/v1/auth/me', {
-    method: 'GET',
+  const response = await fetch("/api/v1/auth/me", {
+    method: "GET",
     headers: {
-      'Authorization': `Bearer ${accessToken}`
-    }
+      Authorization: `Bearer ${accessToken}`,
+    },
   });
   return response.json();
 };
@@ -711,24 +746,24 @@ const getProfileWithToken = async (accessToken) => {
 ### Using with Axios
 
 ```javascript
-import axios from 'axios';
+import axios from "axios";
 
 const api = axios.create({
-  baseURL: '/api/v1/auth',
-  withCredentials: true // Important for cookies
+  baseURL: "/api/v1/auth",
+  withCredentials: true, // Important for cookies
 });
 
 // Register
-const register = (userData) => api.post('/register', userData);
+const register = (userData) => api.post("/register", userData);
 
 // Login
-const login = (credentials) => api.post('/login', credentials);
+const login = (credentials) => api.post("/login", credentials);
 
 // Protected Request
-const getProfile = () => api.get('/me');
+const getProfile = () => api.get("/me");
 
 // Refresh Token
-const refreshToken = () => api.post('/refresh-access-token');
+const refreshToken = () => api.post("/refresh-access-token");
 ```
 
 ### Handling Token Expiry (Axios Interceptor)
@@ -738,22 +773,22 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      
+
       try {
-        await api.post('/refresh-access-token');
+        await api.post("/refresh-access-token");
         return api(originalRequest);
       } catch (refreshError) {
         // Redirect to login
-        window.location.href = '/login';
+        window.location.href = "/login";
         return Promise.reject(refreshError);
       }
     }
-    
+
     return Promise.reject(error);
-  }
+  },
 );
 ```
 
@@ -764,34 +799,38 @@ api.interceptors.response.use(
 ### Protecting Routes
 
 ```javascript
-import { verifyJWT } from '../middlewares/auth.middleware.js';
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 // Single protected route
-router.get('/profile', verifyJWT, getProfile);
+router.get("/profile", verifyJWT, getProfile);
 
 // Multiple protected routes
 router.use(verifyJWT); // All routes below are protected
-router.get('/profile', getProfile);
-router.patch('/profile', updateProfile);
+router.get("/profile", getProfile);
+router.patch("/profile", updateProfile);
 ```
 
 ### Adding Validation
 
 ```javascript
-import { validate, createValidationLayer } from '../middlewares/validation.middleware.js';
-import { userRegisterSchema } from '../validators/index.js';
+import {
+  validate,
+  createValidationLayer,
+} from "../middlewares/validation.middleware.js";
+import { userRegisterSchema } from "../validators/index.js";
 
 // Simple validation
-router.post('/register', validate(userRegisterSchema), registerUser);
+router.post("/register", validate(userRegisterSchema), registerUser);
 
 // Multi-layer validation
-router.post('/register',
+router.post(
+  "/register",
   ...createValidationLayer({
     schema: userRegisterSchema,
     sanitize: true,
-    validateSecurity: true
+    validateSecurity: true,
   }),
-  registerUser
+  registerUser,
 );
 ```
 
@@ -823,24 +862,24 @@ router.post('/register',
 
 ### Common Issues
 
-| Issue | Solution |
-|-------|----------|
-| "Token expired" | Implement token refresh logic |
-| "Invalid token" | Check secret key matches |
-| "User not found" | Verify user exists in database |
-| "Validation failed" | Check request body format |
-| Cookies not sent | Set `credentials: 'include'` |
-| CORS errors | Configure CORS origin properly |
+| Issue               | Solution                       |
+| ------------------- | ------------------------------ |
+| "Token expired"     | Implement token refresh logic  |
+| "Invalid token"     | Check secret key matches       |
+| "User not found"    | Verify user exists in database |
+| "Validation failed" | Check request body format      |
+| Cookies not sent    | Set `credentials: 'include'`   |
+| CORS errors         | Configure CORS origin properly |
 
 ---
 
 ## Changelog
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0.0 | Dec 2025 | Initial implementation |
-| 1.1.0 | Dec 2025 | Migrated to Zod validation |
-| 1.2.0 | Dec 2025 | Added comprehensive documentation |
+| Version | Date     | Changes                           |
+| ------- | -------- | --------------------------------- |
+| 1.0.0   | Dec 2025 | Initial implementation            |
+| 1.1.0   | Dec 2025 | Migrated to Zod validation        |
+| 1.2.0   | Dec 2025 | Added comprehensive documentation |
 
 ---
 

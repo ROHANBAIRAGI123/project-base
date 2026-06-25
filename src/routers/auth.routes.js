@@ -1,128 +1,131 @@
 import { Router } from "express";
-import { 
-    loginUser,
-    registerUser, 
-    logoutUser,
-    deleteUser,
-    getAllUsers,
-    getCurrentUser,
-    verifyEmailToken,
-    sendVerificationEmail,
-    refreshAccessToken,
-    changePassword,
-    forgotPassword,
-    resetPassword,
-    updateUserProfile
+import {
+  loginUser,
+  registerUser,
+  logoutUser,
+  deleteUser,
+  getAllUsers,
+  getCurrentUser,
+  verifyEmailToken,
+  sendVerificationEmail,
+  refreshAccessToken,
+  changePassword,
+  forgotPassword,
+  resetPassword,
+  updateUserProfile,
 } from "../controllers/auth.controllers.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { authRateLimiter } from "../middlewares/rateLimiter.middleware.js";
-import { validate, createValidationLayer } from "../middlewares/validation.middleware.js";
+import {
+  validate,
+  createValidationLayer,
+} from "../middlewares/validation.middleware.js";
 import { sanitizeAndValidateInput } from "../middlewares/sanitization.middleware.js";
 import {
-    userRegisterSchema,
-    userLoginSchema,
-    userChangeCurrentPasswordSchema,
-    userForgotPasswordSchema,
-    userResetForgotPasswordSchema,
-    userEmailVerificationSchema,
-    userProfileUpdateSchema,
-    deleteUserSchema,
-    refreshAccessTokenSchema
+  userRegisterSchema,
+  userLoginSchema,
+  userChangeCurrentPasswordSchema,
+  userForgotPasswordSchema,
+  userResetForgotPasswordSchema,
+  userEmailVerificationSchema,
+  userProfileUpdateSchema,
+  deleteUserSchema,
+  refreshAccessTokenSchema,
 } from "../validators/index.js";
 import {
-    userRegisterResponseSchema,
-    userLoginResponseSchema,
-    successResponseSchema
+  userRegisterResponseSchema,
+  userLoginResponseSchema,
+  successResponseSchema,
 } from "../validators/response.schemas.js";
 
 const router = Router();
 
 // Public routes — brute-force targets: strict authRateLimiter applied (10 req / 15 min / IP)
 router.route("/register").post(
-    authRateLimiter,
-    ...createValidationLayer({
-        schema: userRegisterSchema,
-        sanitize: true,
-        validateSecurity: true,
-        responseSchema: process.env.NODE_ENV === 'development' ? userRegisterResponseSchema : null
-    }),
-    registerUser
+  authRateLimiter,
+  ...createValidationLayer({
+    schema: userRegisterSchema,
+    sanitize: true,
+    validateSecurity: true,
+    responseSchema:
+      process.env.NODE_ENV === "development"
+        ? userRegisterResponseSchema
+        : null,
+  }),
+  registerUser,
 );
 
 router.route("/login").post(
-    authRateLimiter,
-    ...createValidationLayer({
-        schema: userLoginSchema,
-        sanitize: true,
-        validateSecurity: true,
-        responseSchema: process.env.NODE_ENV === 'development' ? userLoginResponseSchema : null
-    }),
-    loginUser
+  authRateLimiter,
+  ...createValidationLayer({
+    schema: userLoginSchema,
+    sanitize: true,
+    validateSecurity: true,
+    responseSchema:
+      process.env.NODE_ENV === "development" ? userLoginResponseSchema : null,
+  }),
+  loginUser,
 );
 
-router.route("/verify-email/:verificationToken").get(
-    validate(userEmailVerificationSchema),
-    verifyEmailToken
-);
+router
+  .route("/verify-email/:verificationToken")
+  .get(validate(userEmailVerificationSchema), verifyEmailToken);
 
-router.route("/refresh-access-token").post(
-    validate(refreshAccessTokenSchema),
-    refreshAccessToken
-);
+router
+  .route("/refresh-access-token")
+  .post(validate(refreshAccessTokenSchema), refreshAccessToken);
 
 router.route("/forgot-password").post(
-    authRateLimiter,
-    ...createValidationLayer({
-        schema: userForgotPasswordSchema,
-        sanitize: true,
-        validateSecurity: false
-    }),
-    forgotPassword
+  authRateLimiter,
+  ...createValidationLayer({
+    schema: userForgotPasswordSchema,
+    sanitize: true,
+    validateSecurity: false,
+  }),
+  forgotPassword,
 );
 
 router.route("/reset-password/:resetToken").post(
-    authRateLimiter,
-    ...createValidationLayer({
-        schema: userResetForgotPasswordSchema,
-        sanitize: true
-    }),
-    resetPassword
+  authRateLimiter,
+  ...createValidationLayer({
+    schema: userResetForgotPasswordSchema,
+    sanitize: true,
+  }),
+  resetPassword,
 );
 
-router.route("/get-all-users").get(verifyJWT,getAllUsers);
+router.route("/get-all-users").get(verifyJWT, getAllUsers);
 
 // Protected routes (require authentication)
 router.route("/logout").post(verifyJWT, logoutUser);
 
-router.route("/delete-user").post(
-    verifyJWT,
-    validate(deleteUserSchema),
-    deleteUser
-);
+router
+  .route("/delete-user")
+  .post(verifyJWT, validate(deleteUserSchema), deleteUser);
 
 router.route("/me").get(verifyJWT, getCurrentUser);
 
 router.route("/send-verification-email").post(verifyJWT, sendVerificationEmail);
 
 router.route("/change-password").patch(
-    verifyJWT,
-    ...sanitizeAndValidateInput({
-        enableXSSProtection: true,
-        enableSQLProtection: true,
-        maxRequestSize: 1024 * 512,
-    }),
-    validate(userChangeCurrentPasswordSchema),
-    changePassword
+  verifyJWT,
+  ...sanitizeAndValidateInput({
+    enableXSSProtection: true,
+    enableSQLProtection: true,
+    maxRequestSize: 1024 * 512,
+  }),
+  validate(userChangeCurrentPasswordSchema),
+  changePassword,
 );
 
 router.route("/me").patch(
-    verifyJWT,
-    ...createValidationLayer({
-        schema: userProfileUpdateSchema,
-        sanitize: true,
-        validateSecurity: true
-    }),
-    updateUserProfile
+  verifyJWT,
+  ...createValidationLayer({
+    schema: userProfileUpdateSchema,
+    sanitize: true,
+    validateSecurity: true,
+  }),
+  updateUserProfile,
 );
 
 export default router;
@@ -134,14 +137,14 @@ export default router;
  *
  * PURPOSE: Maps authentication and user profile related HTTP requests to their respective controller functions.
  * ROLE IN ARCHITECTURE: Routing layer. Directs traffic entering via `/api/v1/auth` through appropriate validation and security middlewares before hitting the controller logic.
- * 
+ *
  * IMPORTS:
  * - `express.Router`: Used to create modular, mountable route handlers.
  * - Controller functions (`loginUser`, `registerUser`, etc.): The actual business logic handlers.
  * - Middlewares (`verifyJWT`, `validate`, `createValidationLayer`, `sanitizeAndValidateInput`): Used to enforce security, authentication, and input schema validation.
  * - Validation Schemas (`userRegisterSchema`, etc.): Zod definitions defining what data is allowed.
  * - Response Schemas (`userLoginResponseSchema`, etc.): Zod definitions defining output shape.
- * 
+ *
  * FUNCTION-BY-FUNCTION ANALYSIS:
  * - Public Routes (`/register`, `/login`, `/verify-email`, `/forgot-password`, `/reset-password`):
  *   - Wrapped in heavy validation and sanitization layers (XSS, SQL injection protection).
@@ -149,15 +152,15 @@ export default router;
  * - Protected Routes (`/logout`, `/me`, `/change-password`, `/delete-user`):
  *   - All require the `verifyJWT` middleware.
  *   - `req.user` is guaranteed to be populated by the time the controller is reached.
- * 
+ *
  * HOW THIS FILE CONNECTS TO OTHER FILES:
  * - Inbound callers: Mounted in `src/app.js` under the prefix `/api/v1/auth`.
  * - Outbound dependencies: Passes flow control to `auth.controllers.js`.
- * 
+ *
  * DESIGN PATTERNS:
  * - Router-Level Middleware Pattern: Validation and security are applied per-route at the router level, keeping controllers strictly focused on business logic rather than request parsing.
  * - Environmental Toggles: Response validation (`responseSchema`) is only applied in development mode (`process.env.NODE_ENV === 'development'`) to avoid production performance overhead.
- * 
+ *
  * POTENTIAL INTERVIEW QUESTIONS:
  * 1. Why is `verifyJWT` required on `/logout`?
  *    Answer: Because logging out involves invalidating the specific user's refresh token and clearing their cookies. The server needs to know *who* is making the logout request to clear the correct database records.

@@ -1,32 +1,29 @@
 import rateLimit from "express-rate-limit";
 
-
 // Tier 1 — Strict limiter for unauthenticated brute-force targets:
 // /login, /register, /forgot-password, /reset-password
 export const authRateLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15-minute window
-    max: 10,                   // 10 attempts per window per IP
-    standardHeaders: 'draft-7',
-    legacyHeaders: false,
-    message: {
-        success: false,
-        message: 'Too many attempts. Please try again after 15 minutes.',
-    },
+  windowMs: 15 * 60 * 1000, // 15-minute window
+  max: 10, // 10 attempts per window per IP
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many attempts. Please try again after 15 minutes.",
+  },
 });
 
 // Tier 2 — General limiter for all API routes (DoS protection)
 export const globalRateLimiter = rateLimit({
-    windowMs: 60 * 1000,       // 1-minute window
-    max: 100,                  // 100 requests per minute per IP
-    standardHeaders: 'draft-7',
-    legacyHeaders: false,
-    message: {
-        success: false,
-        message: 'Too many requests. Please slow down.',
-    },
+  windowMs: 60 * 1000, // 1-minute window
+  max: 100, // 100 requests per minute per IP
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many requests. Please slow down.",
+  },
 });
-
-
 
 /*
  * RATE LIMITING STRATEGY

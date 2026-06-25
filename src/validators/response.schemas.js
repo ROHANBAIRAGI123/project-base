@@ -22,7 +22,7 @@ export const userResponseSchema = z.object({
 
 export const userRegisterResponseSchema = baseResponseSchema.extend({
   data: z.object({
-    user: userResponseSchema.omit({ 
+    user: userResponseSchema.omit({
       // Remove sensitive fields from response
     }),
   }),
@@ -42,11 +42,13 @@ export const projectResponseSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
   createdBy: z.string(),
-  members: z.array(z.object({
-    userId: z.string(),
-    role: z.string(),
-    joinedAt: z.string().datetime().optional(),
-  })),
+  members: z.array(
+    z.object({
+      userId: z.string(),
+      role: z.string(),
+      joinedAt: z.string().datetime().optional(),
+    }),
+  ),
   createdAt: z.string().datetime().optional(),
   updatedAt: z.string().datetime().optional(),
 });
@@ -54,12 +56,14 @@ export const projectResponseSchema = z.object({
 export const projectListResponseSchema = baseResponseSchema.extend({
   data: z.object({
     projects: z.array(projectResponseSchema),
-    pagination: z.object({
-      page: z.number(),
-      limit: z.number(),
-      total: z.number(),
-      pages: z.number(),
-    }).optional(),
+    pagination: z
+      .object({
+        page: z.number(),
+        limit: z.number(),
+        total: z.number(),
+        pages: z.number(),
+      })
+      .optional(),
   }),
 });
 
@@ -81,23 +85,29 @@ export const taskResponseSchema = z.object({
 export const taskListResponseSchema = baseResponseSchema.extend({
   data: z.object({
     tasks: z.array(taskResponseSchema),
-    pagination: z.object({
-      page: z.number(),
-      limit: z.number(),
-      total: z.number(),
-      pages: z.number(),
-    }).optional(),
+    pagination: z
+      .object({
+        page: z.number(),
+        limit: z.number(),
+        total: z.number(),
+        pages: z.number(),
+      })
+      .optional(),
   }),
 });
 
 // Error response schema
 export const errorResponseSchema = baseResponseSchema.extend({
   success: z.literal(false),
-  errors: z.array(z.object({
-    field: z.string().optional(),
-    message: z.string(),
-    value: z.any().optional(),
-  })).optional(),
+  errors: z
+    .array(
+      z.object({
+        field: z.string().optional(),
+        message: z.string(),
+        value: z.any().optional(),
+      }),
+    )
+    .optional(),
 });
 
 // Success response schema
@@ -129,23 +139,23 @@ export const paginatedResponseSchema = (itemSchema) => {
  *
  * PURPOSE: Defines Zod schemas representing the exact shape of successful HTTP responses.
  * ROLE IN ARCHITECTURE: API Contract/Documentation Layer. While request validation protects the server, response validation ensures the server fulfills its contract to the client.
- * 
+ *
  * IMPORTS:
  * - `z` (Zod): Used to define the shape of the output data.
- * 
+ *
  * FUNCTION-BY-FUNCTION ANALYSIS:
  * - `baseResponseSchema`: The standard wrapper containing `success`, `message`, `statusCode`, and optional `data`/`errors`.
  * - Entity Schemas (`userResponseSchema`, `projectResponseSchema`, `taskResponseSchema`): Define exactly which fields of a DB model are allowed to be sent to the client (e.g., explicitly omitting passwords).
  * - Aggregation Schemas (`projectListResponseSchema`, `paginatedResponseSchema`): Define the structure for lists, including pagination metadata.
- * 
+ *
  * HOW THIS FILE CONNECTS TO OTHER FILES:
  * - Inbound callers: Currently serves as documentation/contract definition. Could be integrated into an interceptor middleware to strip out sensitive data before sending responses.
  * - Outbound dependencies: None.
- * 
+ *
  * DESIGN PATTERNS:
  * - Data Transfer Object (DTO) Schema: Formalizes the structure of the data leaving the system.
  * - Inheritance/Extension: Uses `baseResponseSchema.extend()` to inherit common fields while adding specific `data` payloads.
- * 
+ *
  * POTENTIAL INTERVIEW QUESTIONS:
  * 1. What is the value of response schemas if they aren't actively blocking requests?
  *    Answer: They serve as executable documentation. In advanced setups, they can be used to auto-generate Swagger/OpenAPI docs, or be applied in middleware to automatically strip sensitive fields (like passwords) if a developer accidentally includes them in the controller output.

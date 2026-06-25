@@ -14,13 +14,15 @@ The validation system consists of several components:
 ## Key Features
 
 ### 🔒 Security Features
+
 - **XSS Protection** - Prevents cross-site scripting attacks
-- **SQL Injection Protection** - Blocks SQL injection attempts  
+- **SQL Injection Protection** - Blocks SQL injection attempts
 - **Input Sanitization** - Cleans and normalizes user input
 - **Rate Limiting Validation** - Validates client information
 - **File Upload Security** - Validates file types, sizes, and names
 
 ### ✅ Validation Features
+
 - **Type Safety** - Strong typing with Zod schemas
 - **Custom Transformations** - Auto-transform data (lowercase, trim, etc.)
 - **Complex Validation** - Cross-field validation and custom rules
@@ -30,60 +32,64 @@ The validation system consists of several components:
 ## Usage Examples
 
 ### Basic Validation
+
 ```javascript
 import { validate } from "../middlewares/validation.middleware.js";
 import { userRegisterSchema } from "../validators/index.js";
 
-router.post("/register", 
-  validate(userRegisterSchema),
-  registerUser
-);
+router.post("/register", validate(userRegisterSchema), registerUser);
 ```
 
 ### Multi-Layer Validation
+
 ```javascript
 import { createValidationLayer } from "../middlewares/validation.middleware.js";
 
-router.post("/create-project",
+router.post(
+  "/create-project",
   ...createValidationLayer({
     schema: createProjectSchema,
     sanitize: true,
-    validateSecurity: true
+    validateSecurity: true,
   }),
-  createProject
+  createProject,
 );
 ```
 
 ### Advanced Sanitization
+
 ```javascript
 import { sanitizeAndValidateInput } from "../middlewares/sanitization.middleware.js";
 
-router.post("/sensitive-endpoint",
+router.post(
+  "/sensitive-endpoint",
   ...sanitizeAndValidateInput({
     enableXSSProtection: true,
     enableSQLProtection: true,
     maxRequestSize: 2 * 1024 * 1024,
     customSanitizers: {
-      name: (value) => value?.trim().replace(/[^\w\s\-_]/g, ''),
-      email: (value) => value?.toLowerCase().trim()
-    }
+      name: (value) => value?.trim().replace(/[^\w\s\-_]/g, ""),
+      email: (value) => value?.toLowerCase().trim(),
+    },
   }),
   validate(schema),
-  controller
+  controller,
 );
 ```
 
 ## Available Validation Schemas
 
 ### Authentication Schemas
+
 - `userRegisterSchema` - User registration with strong password requirements
-- `userLoginSchema` - Login with email/username flexibility  
+- `userLoginSchema` - Login with email/username flexibility
 - `userChangeCurrentPasswordSchema` - Password change with confirmation
 - `userForgotPasswordSchema` - Password reset request
 - `userResetForgotPasswordSchema` - Password reset completion
 - `userEmailVerificationSchema` - Email verification token
 
 ### Project Schemas
+
 - `createProjectSchema` - Project creation with name validation
 - `updateProjectSchema` - Project updates with optional fields
 - `addMemberToProjectSchema` - Add team members with role validation
@@ -91,12 +97,14 @@ router.post("/sensitive-endpoint",
 - `updateMemberRoleSchema` - Change member permissions
 
 ### Task Schemas
+
 - `createTaskSchema` - Task creation with priority and status
 - `updateTaskSchema` - Task updates with field validation
 - `deleteTaskSchema` - Task deletion with ID validation
 - `taskFilterSchema` - Advanced task filtering and search
 
-### Common Schemas  
+### Common Schemas
+
 - `mongoIdParamSchema` - MongoDB ObjectId validation
 - `paginationSchema` - Pagination parameters with limits
 - `fileUploadSchema` - File upload validation
@@ -104,6 +112,7 @@ router.post("/sensitive-endpoint",
 ## Validation Layers
 
 ### Layer 1: Input Sanitization
+
 ```javascript
 // Automatic sanitization based on field names
 req.body.email → automatically lowercased and trimmed
@@ -112,10 +121,11 @@ req.body.fullname → normalized whitespace, invalid characters removed
 ```
 
 ### Layer 2: Security Validation
+
 ```javascript
 // XSS Protection
 - Removes <script> tags
-- Blocks javascript: protocols  
+- Blocks javascript: protocols
 - Sanitizes HTML/XML patterns
 
 // SQL Injection Protection
@@ -125,6 +135,7 @@ req.body.fullname → normalized whitespace, invalid characters removed
 ```
 
 ### Layer 3: Schema Validation
+
 ```javascript
 // Zod schema validation with:
 - Type checking
@@ -136,6 +147,7 @@ req.body.fullname → normalized whitespace, invalid characters removed
 ```
 
 ### Layer 4: Response Validation (Development)
+
 ```javascript
 // Ensures API responses match expected schemas
 // Only active in development mode
@@ -164,11 +176,14 @@ Validation errors return structured responses:
 ## Configuration
 
 ### Environment-Based Behavior
+
 - **Development**: Full validation, response validation enabled
 - **Production**: Optimized validation, security focused
 
 ### Validation Constants
+
 Located in `src/utils/constants.js`:
+
 ```javascript
 export const ValidationConstants = {
   PASSWORD_MIN_LENGTH: 6,
@@ -190,12 +205,13 @@ import { z } from "zod";
 
 const customSchema = z.object({
   body: z.object({
-    customField: z.string()
+    customField: z
+      .string()
       .min(1, "Field is required")
       .max(50, "Field too long")
       .regex(/^[A-Z]/, "Must start with capital letter")
-      .refine(val => !val.includes('banned'), "Contains banned word")
-  })
+      .refine((val) => !val.includes("banned"), "Contains banned word"),
+  }),
 });
 
 // Use with validation middleware
@@ -207,20 +223,21 @@ router.post("/endpoint", validate(customSchema), controller);
 ```javascript
 import { validateFileUpload } from "../middlewares/sanitization.middleware.js";
 
-router.post("/upload",
+router.post(
+  "/upload",
   validateFileUpload({
-    allowedTypes: ['image/jpeg', 'image/png', 'application/pdf'],
+    allowedTypes: ["image/jpeg", "image/png", "application/pdf"],
     maxSize: 10 * 1024 * 1024, // 10MB
-    maxFiles: 5
+    maxFiles: 5,
   }),
-  uploadController
+  uploadController,
 );
 ```
 
 ## Best Practices
 
 1. **Always use validation layers** for user-facing endpoints
-2. **Apply sanitization** before validation  
+2. **Apply sanitization** before validation
 3. **Use response validation** in development
 4. **Customize sanitizers** for specific field types
 5. **Set appropriate limits** for file uploads and request sizes
@@ -231,15 +248,17 @@ router.post("/upload",
 ## Migration from express-validator
 
 Old express-validator patterns:
+
 ```javascript
 // OLD
-body("email").isEmail().withMessage("Invalid email")
+body("email").isEmail().withMessage("Invalid email");
 
-// NEW  
-z.string().email("Invalid email")
+// NEW
+z.string().email("Invalid email");
 ```
 
 The new system provides:
+
 - Better TypeScript support
 - More comprehensive validation options
 - Built-in sanitization
@@ -250,7 +269,7 @@ The new system provides:
 ## Performance Considerations
 
 - Validation middleware is optimized for production
-- Response validation only runs in development  
+- Response validation only runs in development
 - Large file validation uses streaming
 - Rate limiting prevents abuse
 - Efficient schema compilation

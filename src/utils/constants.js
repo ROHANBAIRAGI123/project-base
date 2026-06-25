@@ -57,10 +57,10 @@ export const NotesStatusEnum = {
  *
  * PURPOSE: Centralizes all system-wide enum values, application limits, and shared configuration options.
  * ROLE IN ARCHITECTURE: Utility module utilized across controllers, models, and validation schemas to ensure consistency and eliminate magic numbers/strings.
- * 
+ *
  * IMPORTS:
  * - None (This is a pure data module with zero dependencies).
- * 
+ *
  * FUNCTION-BY-FUNCTION ANALYSIS:
  * - UserRolesEnum / AvailableUserRole: Defines the valid roles for RBAC (Admin, Project Admin, Member). Used heavily in authorization middleware.
  * - TaskStatusEnum / AvailableTaskStatuses: Specifies allowed states for tasks and subtasks (Todo, In Progress, Done).
@@ -72,10 +72,10 @@ export const NotesStatusEnum = {
  * HOW THIS FILE CONNECTS TO OTHER FILES:
  * - Inbound callers: Imported by virtually every model, controller, and validator in the system.
  * - Outbound dependencies: None.
- * 
+ *
  * DESIGN PATTERNS:
  * - Singleton Data Dictionary: Provides a single source of truth for constants to prevent typo-driven bugs.
- * 
+ *
  * POTENTIAL INTERVIEW QUESTIONS:
  * 1. Why extract string constants into Enums/Objects?
  *    Answer: To prevent typos, enable autocomplete, and provide a single place to update values without hunting down magic strings across the codebase.

@@ -11,6 +11,7 @@ This document captures architectural decisions, rationale, and deferred decision
 **Decision:** The Express backend (`project-base`) stays as a standalone Node.js server. It will never be folded into Next.js API routes.
 
 **Rationale:**
+
 - The layered middleware chain (`verifyJWT → checkProjectPermission → validate → controller`) cannot be cleanly replicated in Next.js route handlers
 - The MCP server (Phase 2) must run as a standalone `stdio`/HTTP process — Next.js serverless functions cannot host it
 - BullMQ workers (Phase 3) require a persistent long-running process — Next.js serverless kills idle processes
@@ -25,6 +26,7 @@ This document captures architectural decisions, rationale, and deferred decision
 **Decision:** Build the frontend as a new repository named `project-camp-web` using Next.js with the App Router.
 
 **Rationale:**
+
 - SSR/SSG is required for future marketing/landing pages (Linear alternative, Jira alternative comparison pages)
 - App Router's RSC + Client Component split maps cleanly to the future local-first model (server fetches seed state, client runs SQLite WASM)
 - Next.js API Routes can proxy or cache backend responses if needed
@@ -68,9 +70,9 @@ project-camp/
 
 **The fork:**
 
-| Goal | Recommended DB |
-|---|---|
-| MCP + Agent features are the primary bet | Stay on MongoDB |
+| Goal                                              | Recommended DB            |
+| ------------------------------------------------- | ------------------------- |
+| MCP + Agent features are the primary bet          | Stay on MongoDB           |
 | Local-First OPFS SQLite sync (Phase 4) is serious | Migrate to PostgreSQL now |
 
 **Reasoning:** MongoDB ↔ SQLite replication is non-standard and painful. PostgreSQL → SQLite sync is a solved problem via PGLite, Electric SQL, and Zero Sync. If Phase 4 is a real goal, migrating the schema while it is still small (now) is far cheaper than migrating after launch.
@@ -78,6 +80,7 @@ project-camp/
 > ⚠️ **This decision must be made before writing any more Mongoose models.** Once the Notes module, Agent profiles, and Organization models are added, migration cost grows significantly.
 
 **Deferred decision — owner must decide:**
+
 - [ ] Is Local-First (Phase 4) a core product bet or a stretch goal?
 - [ ] If core → migrate to PostgreSQL now
 - [ ] If stretch → stay on MongoDB, revisit in Phase 3
@@ -90,10 +93,10 @@ project-camp/
 
 **Decision:** Design two authentication mechanisms from the start.
 
-| Client Type | Auth Method |
-|---|---|
-| Browser (human users) | `httpOnly` cookie-based JWT (already implemented) |
-| AI Agents / MCP clients | `Authorization: Bearer <api_key>` header |
+| Client Type             | Auth Method                                       |
+| ----------------------- | ------------------------------------------------- |
+| Browser (human users)   | `httpOnly` cookie-based JWT (already implemented) |
+| AI Agents / MCP clients | `Authorization: Bearer <api_key>` header          |
 
 **Why now:** AI agents do not have cookie jars. The MCP server (Phase 2) needs agents to authenticate via API keys. Bolting this on later means touching the `verifyJWT` middleware and all protected routes. Designing the dual-path now keeps the change surgical.
 
@@ -119,7 +122,7 @@ Organization → Projects → Tasks → Subtasks
 
 **Decision:** Add `deletedAt: Date` (nullable) to all Mongoose models instead of using hard `deleteOne()`.
 
-**Why:** The roadmap calls for SOC2 audit logs, CRDT history replay, and cascading delete protection. All of these require knowing *when* and *what* was deleted, not just that it's gone. Hard deletes make these features impossible to add later.
+**Why:** The roadmap calls for SOC2 audit logs, CRDT history replay, and cascading delete protection. All of these require knowing _when_ and _what_ was deleted, not just that it's gone. Hard deletes make these features impossible to add later.
 
 **Affected models:** `User`, `Project`, `Task`, `Subtask`, `Note`, `ProjectMember`, `ProjectInvitation`.
 
@@ -131,24 +134,27 @@ Organization → Projects → Tasks → Subtasks
 
 **Timing rationale:**
 
-| Timing option | Risk |
-|---|---|
-| Migrate now (before tests) | A TS migration touches every file. Without tests, you have no safety net to catch regressions. |
-| Migrate after tests | Tests act as a regression guard during the rename + type annotation phase. Safe. |
-| Migrate after Notes/MCP/Agents | Each new feature adds more files to migrate. Cost compounds. Don't wait this long. |
-| Never migrate (stay JS) | Shared types with Next.js frontend require a manually-maintained `shared-types/` package — a guaranteed source of drift bugs. |
+| Timing option                  | Risk                                                                                                                          |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| Migrate now (before tests)     | A TS migration touches every file. Without tests, you have no safety net to catch regressions.                                |
+| Migrate after tests            | Tests act as a regression guard during the rename + type annotation phase. Safe.                                              |
+| Migrate after Notes/MCP/Agents | Each new feature adds more files to migrate. Cost compounds. Don't wait this long.                                            |
+| Never migrate (stay JS)        | Shared types with Next.js frontend require a manually-maintained `shared-types/` package — a guaranteed source of drift bugs. |
 
 **The concrete sequence:**
+
 ```
 Write tests (Vitest) → tests pass → npm install typescript → migrate files to .ts → tests still pass → start frontend
 ```
 
 **Why this timing is the sweet spot:**
+
 - The backend has ~15 source files right now. That is a 1–2 day migration.
 - After Notes CRUD, MCP server, and Agent models land, that number triples. Migration becomes a week-long project.
 - From day 1 of frontend development, the backend exports real TypeScript types that Next.js can import directly — no drift, no manual sync.
 
 **What the migration involves:**
+
 - `npm install -D typescript @types/node @types/express @types/mongoose @types/bcryptjs @types/jsonwebtoken @types/nodemailer @types/cookie-parser`
 - Add `tsconfig.json` (target: ESNext, module: NodeNext, strict: true)
 - Rename `.js` → `.ts`, fix type errors
@@ -167,10 +173,10 @@ Write tests (Vitest) → tests pass → npm install typescript → migrate files
 
 **Two tiers:**
 
-| Tier | Routes | Limit |
-|---|---|---|
-| **Strict** (`authRateLimiter`) | `/login`, `/register`, `/forgot-password`, `/reset-password` — applied per-route in `auth.routes.js` | 10 req / 15 min / IP |
-| **General** (`globalRateLimiter`) | All `/api/` routes — mounted in `app.js` before all route handlers | 100 req / min / IP |
+| Tier                              | Routes                                                                                               | Limit                |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------- |
+| **Strict** (`authRateLimiter`)    | `/login`, `/register`, `/forgot-password`, `/reset-password` — applied per-route in `auth.routes.js` | 10 req / 15 min / IP |
+| **General** (`globalRateLimiter`) | All `/api/` routes — mounted in `app.js` before all route handlers                                   | 100 req / min / IP   |
 
 **Known limitation of Fixed Window:** A determined client can double-burst at window boundaries (end of window N + start of window N+1). Acceptable at current traffic. Upgrade to Sliding Window via `rate-limiter-flexible` + Redis in Phase 3 if needed.
 
@@ -181,8 +187,8 @@ Write tests (Vitest) → tests pass → npm install typescript → migrate files
 ```js
 // The only change needed in Phase 3:
 store: new RedisStore({
-    sendCommand: (...args) => redisClient.sendCommand(args),
-})
+  sendCommand: (...args) => redisClient.sendCommand(args),
+});
 ```
 
 > **Do not introduce Redis now.** It adds infrastructure complexity for near-zero traffic gain. The in-memory store is sufficient until BullMQ forces Redis into the stack anyway.
@@ -195,17 +201,18 @@ store: new RedisStore({
 
 **Why Vitest over Jest:**
 
-| Factor | Vitest | Jest |
-|---|---|---|
-| **ESM support** | Native, zero config | Requires `--experimental-vm-modules` flag + Babel |
-| **This project uses `"type": "module"`** | Works out of the box | Painful; multiple workarounds needed |
-| **Speed** | ~2× faster (Vite-powered) | Slower cold start |
-| **API compatibility** | Same `describe` / `it` / `expect` as Jest | N/A |
-| **TypeScript** | Native (important for later migration) | Requires `ts-jest` or Babel |
+| Factor                                   | Vitest                                    | Jest                                              |
+| ---------------------------------------- | ----------------------------------------- | ------------------------------------------------- |
+| **ESM support**                          | Native, zero config                       | Requires `--experimental-vm-modules` flag + Babel |
+| **This project uses `"type": "module"`** | Works out of the box                      | Painful; multiple workarounds needed              |
+| **Speed**                                | ~2× faster (Vite-powered)                 | Slower cold start                                 |
+| **API compatibility**                    | Same `describe` / `it` / `expect` as Jest | N/A                                               |
+| **TypeScript**                           | Native (important for later migration)    | Requires `ts-jest` or Babel                       |
 
 **The `"type": "module"` in `package.json` is the deciding factor.** Jest + ESM is a known pain point with no clean solution. Vitest was built for modern ESM-first projects.
 
 **Why MongoDB Memory Server:**
+
 - Tests must never touch the real database
 - Spins up an actual MongoDB instance in-process — tests use real Mongoose queries, not mocks
 - Fast (~200ms startup), zero external dependency, disposable after each test suite
@@ -257,10 +264,10 @@ project-base/
 
 ### Test Categories Explained
 
-| Type | What it tests | Uses DB? | Uses HTTP? |
-|---|---|---|---|
+| Type            | What it tests                                                | Uses DB?            | Uses HTTP?      |
+| --------------- | ------------------------------------------------------------ | ------------------- | --------------- |
 | **Integration** | Full request → middleware → controller → DB → response cycle | Yes (Memory Server) | Yes (Supertest) |
-| **Unit** | Single function in isolation (Zod schema, ApiError shape) | No | No |
+| **Unit**        | Single function in isolation (Zod schema, ApiError shape)    | No                  | No              |
 
 **Do not write unit tests for controllers.** Controllers are orchestration code — they only make sense tested as a full HTTP round-trip. Mocking Mongoose inside a controller test gives you false confidence.
 
@@ -272,7 +279,7 @@ Write these 8 tests first. Everything else can be added incrementally.
 
 ```
 ✔ POST /auth/register          → 201, user created in DB
-✔ POST /auth/login             → 200, access+refresh cookies set  
+✔ POST /auth/login             → 200, access+refresh cookies set
 ✔ POST /auth/login (wrong pw)  → 401
 ✔ POST /auth/refresh-access-token → 200, new access token
 ✔ GET  /api/v1/projects        → 200, authenticated user sees their projects
@@ -286,21 +293,21 @@ Write these 8 tests first. Everything else can be added incrementally.
 ### `vitest.config.js` (root level)
 
 ```js
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-    test: {
-        globals: true,                        // no need to import describe/it/expect
-        environment: 'node',
-        globalSetup: './tests/setup/globalSetup.js',
-        setupFiles: ['./tests/setup/testSetup.js'],
-        coverage: {
-            provider: 'v8',
-            reporter: ['text', 'lcov'],
-            include: ['src/**'],
-            exclude: ['src/index.js'],
-        },
+  test: {
+    globals: true, // no need to import describe/it/expect
+    environment: "node",
+    globalSetup: "./tests/setup/globalSetup.js",
+    setupFiles: ["./tests/setup/testSetup.js"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "lcov"],
+      include: ["src/**"],
+      exclude: ["src/index.js"],
     },
+  },
 });
 ```
 
@@ -317,7 +324,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '20' }
+        with: { node-version: "20" }
       - run: npm ci
       - run: npm test
 ```
@@ -353,12 +360,12 @@ Frontend complete → Deploy to Vercel + Railway production
 
 ## 8. Deployment Targets
 
-| Layer | Platform | Rationale |
-|---|---|---|
-| **Backend (Express)** | [Railway](https://railway.app) | Native Node.js + MongoDB support, one-click Redis addon for Phase 3, deploys from GitHub, no cold starts on paid tier |
-| **Frontend (Next.js)** | [Vercel](https://vercel.com) | Made by the Next.js team, zero-config deploys, edge CDN, free SSL |
-| **Database** | MongoDB Atlas (free tier → M10) | Already implied by Mongoose; Atlas has a generous free tier and scales without migration |
-| **Redis (Phase 3)** | Railway Redis addon | Co-located with backend, no separate infra to manage |
+| Layer                  | Platform                        | Rationale                                                                                                             |
+| ---------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| **Backend (Express)**  | [Railway](https://railway.app)  | Native Node.js + MongoDB support, one-click Redis addon for Phase 3, deploys from GitHub, no cold starts on paid tier |
+| **Frontend (Next.js)** | [Vercel](https://vercel.com)    | Made by the Next.js team, zero-config deploys, edge CDN, free SSL                                                     |
+| **Database**           | MongoDB Atlas (free tier → M10) | Already implied by Mongoose; Atlas has a generous free tier and scales without migration                              |
+| **Redis (Phase 3)**    | Railway Redis addon             | Co-located with backend, no separate infra to manage                                                                  |
 
 **When to deploy:** Immediately after P0 fixes and basic tests pass. Do not wait for the backend to be "complete."
 
@@ -366,12 +373,12 @@ Frontend complete → Deploy to Vercel + Railway production
 
 ## 9. Deferred Decisions (Must Revisit Before Phase 2)
 
-| Decision | Options | Deadline |
-|---|---|---|
-| MongoDB vs. PostgreSQL | Stay on MongoDB OR migrate now | Before Notes module is built |
-| Organization model | Add as optional field now OR defer to post-launch | Before first external user |
-| Soft deletes | Add `deletedAt` now OR hard delete | Before Notes/Attachments are implemented |
+| Decision               | Options                                           | Deadline                                 |
+| ---------------------- | ------------------------------------------------- | ---------------------------------------- |
+| MongoDB vs. PostgreSQL | Stay on MongoDB OR migrate now                    | Before Notes module is built             |
+| Organization model     | Add as optional field now OR defer to post-launch | Before first external user               |
+| Soft deletes           | Add `deletedAt` now OR hard delete                | Before Notes/Attachments are implemented |
 
 ---
 
-*Last updated: 2026-06-24. Source: architecture discussions in project planning session.*
+_Last updated: 2026-06-24. Source: architecture discussions in project planning session._
