@@ -56,7 +56,7 @@ app.use("/api/v1/projects", projectRoutes);
 app.use("/api/v1/projects", projectInviteRoutes); // Mount project invite routes under /projects
 
 app.use("/api/v1/:projectId", taskRoutes); // Mount task routes with projectId param
-app.use("/api/v1/:projectId", noteRoutes);
+app.use("/api/v1/:projectId/notes", noteRoutes);
 
 //note router will have :projectId
 
